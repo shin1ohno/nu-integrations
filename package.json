@@ -1,0 +1,50 @@
+{
+  "name": "nu-integrations",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node ./dist/index.js",
+    "start:dev": "npm run build:watch & npm run start",
+    "clean": "rm -rf coverage build tmp",
+    "prebuild": "npm run lint",
+    "build": "tsc -p tsconfig.json",
+    "build:watch": "tsc -w -p tsconfig.json",
+    "build:release": "npm run clean && tsc -p tsconfig.release.json",
+    "lint": "eslint . --ext .ts --ext .mts",
+    "test": "jest --coverage",
+    "prettier": "prettier --config .prettierrc --write .",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "shin1ohno",
+  "license": "ISC",
+  "type": "module",
+  "engines": {
+    "node": ">= 18.12 <19"
+  },
+  "dependencies": {
+    "async-mqtt": "^2.6.2",
+    "dotenv": "^16.0.1",
+    "pino": "^7.3.0",
+    "rxjs": "^7.4.0",
+    "tslib": "~2.4"
+  },
+  "devDependencies": {
+    "@types/jest": "~29.2",
+    "@types/node": "~18",
+    "@typescript-eslint/eslint-plugin": "~5.44",
+    "@typescript-eslint/parser": "~5.44",
+    "eslint": "~8.28",
+    "eslint-config-prettier": "~8.5",
+    "eslint-plugin-jest": "~27.1",
+    "jest": "~29.3",
+    "prettier": "~2.8",
+    "rimraf": "~3.0",
+    "ts-jest": "~29.0",
+    "tsutils": "~3.21",
+    "typescript": "~4.9"
+  },
+  "volta": {
+    "node": "18.12.1"
+  }
+}
