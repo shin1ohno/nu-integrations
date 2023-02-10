@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./dist/index.js",
     "start:dev": "npm run build:watch & npm run start",
-    "clean": "rm -rf coverage build tmp",
+    "clean": "rm -rf coverage dist tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
