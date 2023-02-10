@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: volta-cli/action@v1
       - run: npm ci --no-audit
       - run: npm run lint --if-present
@@ -19,6 +19,8 @@ jobs:
           git config --global user.name "Shin'ichi Ohno"
           git config --global user.email "ohno@cookpad.com"
           git commit -am "Automated build"
-          git push
-        env:
-          CI: true
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
