@@ -15,6 +15,7 @@ describe("RoonNuimoIntegration", () => {
 
     b.connect = () => new Promise((x, _y) => x(undefined));
     b.publish = jest.fn();
+    b.unsubscribe = jest.fn().mockImplementation(() => new Promise((x, _y) => x(undefined)));
     b["on"] = jest.fn();
     const spySubscription = spyOn(b, "subscribe");
 
@@ -64,5 +65,9 @@ describe("RoonNuimoIntegration", () => {
         }),
       );
     });
+
+    await i.down().then(() => {
+      expect(b.unsubscribe).toHaveBeenCalledWith(["nuimo/xxx/operation", "roon/yyy/state", "roon/yyy/outputs/zzz/volume/percent"]);
+    })
   });
 });
