@@ -15,6 +15,7 @@ jobs:
       - run: npm run clean
       - run: npm run build:release --if-present
       - run: |
+          git add dist
           git config --global user.name "Shin'ichi Ohno"
           git config --global user.email "ohno@cookpad.com"
           git commit -am "Automated build"
