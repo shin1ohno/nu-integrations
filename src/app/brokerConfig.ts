@@ -3,10 +3,10 @@ import * as process from "process";
 import { IClientOptions } from "async-mqtt";
 
 class BrokerConfig {
-  private defaultURL = "mqtt://localhost:1833";
-  private readonly brokerURL: string | undefined;
   readonly userName: string | undefined;
   readonly password: string | undefined;
+  private defaultURL = "mqtt://localhost:1833";
+  private readonly brokerURL: string | undefined;
 
   constructor(brokerURL?: string, userName?: string, password?: string) {
     this.brokerURL = brokerURL;

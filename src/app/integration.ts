@@ -31,31 +31,6 @@ class Integration {
     this.broker = broker;
   }
 
-  up(): Promise<IntegrationInterface> {
-    const i = this.integration();
-    return this.broker.connect().then((): IntegrationInterface => {
-      i.up().catch((reason) => {
-        this.broker.disconnect();
-        logger.error(reason);
-      });
-      return i;
-    });
-  }
-
-  private integration() {
-    switch (`${this.options.app.name}-${this.options.controller.name}`) {
-      case "roon-nuimo":
-        return new RoonNuimoIntegration({
-          nuimo: this.options.controller.id,
-          zone: this.options.app.zone,
-          output: this.options.app.output,
-          broker: this.broker,
-        });
-      default:
-        return new NullIntegration();
-    }
-  }
-
   static all(): Integration[] {
     return [
       {
@@ -98,6 +73,31 @@ class Integration {
           new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883")),
         ),
     );
+  }
+
+  up(): Promise<IntegrationInterface> {
+    const i = this.integration();
+    return this.broker.connect().then((): IntegrationInterface => {
+      i.up().catch((reason) => {
+        this.broker.disconnect();
+        logger.error(reason);
+      });
+      return i;
+    });
+  }
+
+  private integration() {
+    switch (`${this.options.app.name}-${this.options.controller.name}`) {
+      case "roon-nuimo":
+        return new RoonNuimoIntegration({
+          nuimo: this.options.controller.id,
+          zone: this.options.app.zone,
+          output: this.options.app.output,
+          broker: this.broker,
+        });
+      default:
+        return new NullIntegration();
+    }
   }
 }
 

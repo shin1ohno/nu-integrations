@@ -5,8 +5,8 @@ import { pino } from "pino";
 const logger = pino();
 
 class Broker {
-  private readonly config: BrokerConfig;
   public client?: AsyncMqttClient;
+  private readonly config: BrokerConfig;
 
   constructor(config: BrokerConfig) {
     this.config = config;

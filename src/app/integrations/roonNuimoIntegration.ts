@@ -1,4 +1,3 @@
-import { IPublishPacket } from "async-mqtt";
 import { Broker } from "../broker.js";
 import { IntegrationInterface } from "./interface.js";
 
@@ -40,28 +39,15 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     return this.broker.unsubscribe(this.topicsToSubscribe);
   }
 
-  private command(payload: string) {
-    this.broker.publish(this.commandTopic, payload);
-  }
-
-  private nuimoReaction(payload: string) {
-    this.broker.publish(this.nuimoReactionTopic, payload);
-  }
-
-  private setVolume(volume: number) {
-    const relativeVolume = volume * 80;
-    this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
-  }
-
-  messageCB = (topic: string, payload: Buffer, _: IPublishPacket) => {
+  messageCB = (topic, payloadBuffer, _) => {
     switch (topic) {
       case this.operationTopic:
-        switch (JSON.parse(payload.toString()).subject) {
+        switch (JSON.parse(payloadBuffer.toString()).subject) {
           case "select":
             this.command("playpause");
             break;
           case "rotate":
-            this.setVolume(JSON.parse(payload.toString()).parameter[0]);
+            this.setVolume(JSON.parse(payloadBuffer.toString()).parameter[0]);
             break;
           case "swipeRight":
             this.command("next");
@@ -74,13 +60,15 @@ export class RoonNuimoIntegration implements IntegrationInterface {
         }
         break;
       case this.roonStateTopic:
-        this.nuimoReaction(JSON.stringify({ status: payload.toString() }));
+        this.nuimoReaction(
+          JSON.stringify({ status: payloadBuffer.toString() }),
+        );
         break;
       case this.roonVolumeTopic:
         this.nuimoReaction(
           JSON.stringify({
             status: "volumeChange",
-            percentage: payload.toString(),
+            percentage: payloadBuffer.toString(),
           }),
         );
         break;
@@ -88,4 +76,17 @@ export class RoonNuimoIntegration implements IntegrationInterface {
         break;
     }
   };
+
+  private command(payload: string) {
+    this.broker.publish(this.commandTopic, payload);
+  }
+
+  private nuimoReaction(payload: string) {
+    this.broker.publish(this.nuimoReactionTopic, payload);
+  }
+
+  private setVolume(volume: number) {
+    const relativeVolume = volume * 80;
+    this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
+  }
 }
