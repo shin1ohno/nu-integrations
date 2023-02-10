@@ -40,22 +40,19 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   }
 
   messageCB = (topic, payloadBuffer, _) => {
+    const mapping = {
+      select: "playpause",
+      swipeRight: "next",
+      swipeLeft: "previous"
+    }
     switch (topic) {
       case this.operationTopic:
         switch (JSON.parse(payloadBuffer.toString()).subject) {
-          case "select":
-            this.command("playpause");
-            break;
           case "rotate":
             this.setVolume(JSON.parse(payloadBuffer.toString()).parameter[0]);
             break;
-          case "swipeRight":
-            this.command("next");
-            break;
-          case "swipeLeft":
-            this.command("previous");
-            break;
           default:
+            this.command(mapping[JSON.parse(payloadBuffer.toString()).subject]);
             break;
         }
         break;
