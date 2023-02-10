@@ -43,9 +43,7 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     const payloadTxt = payloadBuffer.toString();
     if (topic !== this.operationTopic) {
       if (topic === this.roonStateTopic) {
-        this.nuimoReaction(
-          JSON.stringify({status: payloadTxt}),
-        );
+        this.nuimoReaction(JSON.stringify({ status: payloadTxt }));
       } else if (topic === this.roonVolumeTopic) {
         this.nuimoReaction(
           JSON.stringify({
@@ -54,14 +52,16 @@ export class RoonNuimoIntegration implements IntegrationInterface {
           }),
         );
       } else {
+        //do nothing
       }
     } else {
       const mapping = {
         select: "playpause",
         swipeRight: "next",
-        swipeLeft: "previous"
-      }
-      let payload: { subject: string; parameter?: [string | number] } = JSON.parse(payloadTxt);
+        swipeLeft: "previous",
+      };
+      const payload: { subject: string; parameter?: [string | number] } =
+        JSON.parse(payloadTxt);
       switch (payload.subject) {
         case "rotate":
           this.setVolume(parseInt(payload.parameter[0].toString(), 10));
