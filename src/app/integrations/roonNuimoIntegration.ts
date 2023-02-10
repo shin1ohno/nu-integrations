@@ -40,37 +40,36 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   }
 
   messageCB = (topic, payloadBuffer, _) => {
-    const mapping = {
-      select: "playpause",
-      swipeRight: "next",
-      swipeLeft: "previous"
-    }
-    switch (topic) {
-      case this.operationTopic:
-        switch (JSON.parse(payloadBuffer.toString()).subject) {
-          case "rotate":
-            this.setVolume(JSON.parse(payloadBuffer.toString()).parameter[0]);
-            break;
-          default:
-            this.command(mapping[JSON.parse(payloadBuffer.toString()).subject]);
-            break;
-        }
-        break;
-      case this.roonStateTopic:
+    const payloadTxt = payloadBuffer.toString();
+    if (topic !== this.operationTopic) {
+      if (topic === this.roonStateTopic) {
         this.nuimoReaction(
-          JSON.stringify({ status: payloadBuffer.toString() }),
+          JSON.stringify({status: payloadTxt}),
         );
-        break;
-      case this.roonVolumeTopic:
+      } else if (topic === this.roonVolumeTopic) {
         this.nuimoReaction(
           JSON.stringify({
             status: "volumeChange",
-            percentage: payloadBuffer.toString(),
+            percentage: payloadTxt,
           }),
         );
-        break;
-      default:
-        break;
+      } else {
+      }
+    } else {
+      const mapping = {
+        select: "playpause",
+        swipeRight: "next",
+        swipeLeft: "previous"
+      }
+      let payload: { subject: string; parameter?: [string | number] } = JSON.parse(payloadTxt);
+      switch (payload.subject) {
+        case "rotate":
+          this.setVolume(parseInt(payload.parameter[0].toString(), 10));
+          break;
+        default:
+          this.command(mapping[payload.subject]);
+          break;
+      }
     }
   };
 
