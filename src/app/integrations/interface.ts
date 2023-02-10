@@ -4,4 +4,4 @@ interface IntegrationInterface {
   down(): Promise<any>;
 }
 
-export {IntegrationInterface}
+export { IntegrationInterface };

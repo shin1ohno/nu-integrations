@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import * as process from "process";
-import {IClientOptions} from "async-mqtt";
+import { IClientOptions } from "async-mqtt";
 
 class BrokerConfig {
   private defaultURL = "mqtt://localhost:1833";
