@@ -1,6 +1,6 @@
 name: Node.js CI
 
-on: [ push ]
+on: [push]
 
 jobs:
   build:
@@ -15,6 +15,7 @@ jobs:
       - run: npm run clean
       - run: npm run build:release --if-present
       - run: |
+          chmod +x ./dist/index.js
           git add dist
           git config --global user.name "Shin'ichi Ohno"
           git config --global user.email "ohno@cookpad.com"
