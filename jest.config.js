@@ -1,7 +1,7 @@
 export default {
   preset: "ts-jest/presets/default-esm",
   transform: {
-    "^.+\\.m?ts?$": ["ts-jest", { useESM: true }],
+    "^.+\\.m?ts$": ["ts-jest", { useESM: true }],
   },
   testEnvironment: "node",
   roots: ["<rootDir>"],

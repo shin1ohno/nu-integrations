@@ -12,7 +12,6 @@ describe("Integration", () => {
 
   it("should initialise itegration and fire it up", async () => {
     const spy = jest.spyOn(RoonNuimoIntegration.prototype, "up");
-    spy.mockImplementation(() => new Promise((x, _y) => x("")));
     const broker = new Broker(new BrokerConfig());
     const brokerSpy = jest.spyOn(broker, "connect");
     brokerSpy.mockImplementation(() => new Promise((x, _y) => x(undefined)));

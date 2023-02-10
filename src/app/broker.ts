@@ -1,6 +1,7 @@
 import { BrokerConfig } from "./brokerConfig.js";
 import MQTT, { AsyncMqttClient } from "async-mqtt";
 import { pino } from "pino";
+import Rx, { Observable } from "rxjs";
 
 const logger = pino();
 
@@ -38,17 +39,17 @@ class Broker {
     return this.client.end();
   }
 
-  subscribe(topic, cb?): Promise<void> {
-    this.on("message", cb);
-    return new Promise((resolve, reject) => {
+  subscribe(topic): Observable<any> {
+    new Promise((resolve, reject) => {
       if (this.client) {
-        this.client.subscribe(topic).then((_) => resolve());
+        this.client.subscribe(topic).then((_) => resolve(_));
       } else {
         reject(
           "Client is not initiated for this broker. Call connect() before subscribe.",
         );
       }
     });
+    return this.on("message");
   }
 
   unsubscribe(topic) {
@@ -59,8 +60,8 @@ class Broker {
     return this.client.publish(topic, payload);
   }
 
-  private on(event, cb): any {
-    return this.client.on(event, cb);
+  private on(event): Observable<any> {
+    return Rx.fromEvent(this.client, event);
   }
 }
 

@@ -1,11 +1,10 @@
 import { Broker } from "./broker.js";
 import { BrokerConfig } from "./brokerConfig.js";
 import { RoonNuimoIntegration } from "./integrations/roonNuimoIntegration.js";
-import { pino } from "pino";
-const logger = pino();
+import Rx from "rxjs";
 class NullIntegration {
     up() {
-        return new Promise((_x, _y) => undefined);
+        return Rx.Subscription.EMPTY;
     }
     down() {
         return new Promise((_x, _y) => undefined);
@@ -58,10 +57,7 @@ class Integration {
     up() {
         const i = this.integration();
         return this.broker.connect().then(() => {
-            i.up().catch((reason) => {
-                this.broker.disconnect();
-                logger.error(reason);
-            });
+            i.up();
             return i;
         });
     }
@@ -80,3 +76,4 @@ class Integration {
     }
 }
 export { Integration };
+//# sourceMappingURL=integration.js.map

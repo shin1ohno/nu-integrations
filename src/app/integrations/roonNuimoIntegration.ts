@@ -1,5 +1,7 @@
-import { Broker } from "../broker.js";
-import { IntegrationInterface } from "./interface.js";
+import {Broker} from "../broker.js";
+import {IntegrationInterface} from "./interface.js";
+import {Subscription} from "rxjs";
+import {logger} from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly commandTopic: string;
@@ -31,19 +33,21 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     this.broker = options.broker;
   }
 
-  up(): Promise<any> {
-    return this.broker.subscribe(this.topicsToSubscribe, this.messageCB);
+  up(): Subscription {
+    return this.broker
+      .subscribe(this.topicsToSubscribe)
+      .subscribe((x) => this.messageCB(x[0], x[1], x[2]));
   }
 
   down() {
     return this.broker.unsubscribe(this.topicsToSubscribe);
   }
 
-  messageCB = (topic, payloadBuffer, _) => {
+  messageCB = (topic, payloadBuffer, _?) => {
     const payloadTxt = payloadBuffer.toString();
     if (topic !== this.operationTopic) {
       if (topic === this.roonStateTopic) {
-        this.nuimoReaction(JSON.stringify({ status: payloadTxt }));
+        this.nuimoReaction(JSON.stringify({status: payloadTxt}));
       } else if (topic === this.roonVolumeTopic) {
         this.nuimoReaction(
           JSON.stringify({
@@ -62,13 +66,10 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       };
       const payload: { subject: string; parameter?: [string | number] } =
         JSON.parse(payloadTxt);
-      switch (payload.subject) {
-        case "rotate":
-          this.setVolume(parseInt(payload.parameter[0].toString(), 10));
-          break;
-        default:
-          this.command(mapping[payload.subject]);
-          break;
+      if (payload.subject === "rotate") {
+        this.setVolume(parseFloat(payload.parameter[0].toString()));
+      } else {
+        this.command(mapping[payload.subject]);
       }
     }
   };
@@ -82,7 +83,8 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   }
 
   private setVolume(volume: number) {
-    const relativeVolume = volume * 80;
+    const relativeVolume = volume * 60;
+    logger.info(relativeVolume);
     this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
   }
 }

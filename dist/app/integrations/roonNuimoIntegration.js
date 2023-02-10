@@ -1,3 +1,4 @@
+import { logger } from "../utils.js";
 export class RoonNuimoIntegration {
     commandTopic;
     operationTopic;
@@ -22,7 +23,9 @@ export class RoonNuimoIntegration {
         this.broker = options.broker;
     }
     up() {
-        return this.broker.subscribe(this.topicsToSubscribe, this.messageCB);
+        return this.broker
+            .subscribe(this.topicsToSubscribe)
+            .subscribe((x) => this.messageCB(x[0], x[1], x[2]));
     }
     down() {
         return this.broker.unsubscribe(this.topicsToSubscribe);
@@ -40,6 +43,7 @@ export class RoonNuimoIntegration {
                 }));
             }
             else {
+                //do nothing
             }
         }
         else {
@@ -49,13 +53,11 @@ export class RoonNuimoIntegration {
                 swipeLeft: "previous",
             };
             const payload = JSON.parse(payloadTxt);
-            switch (payload.subject) {
-                case "rotate":
-                    this.setVolume(parseInt(payload.parameter[0].toString(), 10));
-                    break;
-                default:
-                    this.command(mapping[payload.subject]);
-                    break;
+            if (payload.subject === "rotate") {
+                this.setVolume(parseFloat(payload.parameter[0].toString()));
+            }
+            else {
+                this.command(mapping[payload.subject]);
             }
         }
     };
@@ -66,7 +68,9 @@ export class RoonNuimoIntegration {
         this.broker.publish(this.nuimoReactionTopic, payload);
     }
     setVolume(volume) {
-        const relativeVolume = volume * 80;
+        const relativeVolume = volume * 60;
+        logger.info(relativeVolume);
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
     }
 }
+//# sourceMappingURL=roonNuimoIntegration.js.map

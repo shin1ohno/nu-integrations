@@ -1,10 +1,9 @@
 import { Broker } from "./broker.js";
 import { BrokerConfig } from "./brokerConfig.js";
 import { RoonNuimoIntegration } from "./integrations/roonNuimoIntegration.js";
-import { pino } from "pino";
 import { IntegrationInterface } from "./integrations/interface.js";
+import Rx from "rxjs";
 
-const logger = pino();
 declare type nuimoOptions = { name: "nuimo"; id: string };
 declare type roonOptions = { name: "roon"; zone: string; output: string };
 declare type IntegrationOptions = {
@@ -14,7 +13,7 @@ declare type IntegrationOptions = {
 
 class NullIntegration implements IntegrationInterface {
   up() {
-    return new Promise((_x, _y) => undefined);
+    return Rx.Subscription.EMPTY;
   }
 
   down() {
@@ -78,10 +77,7 @@ class Integration {
   up(): Promise<IntegrationInterface> {
     const i = this.integration();
     return this.broker.connect().then((): IntegrationInterface => {
-      i.up().catch((reason) => {
-        this.broker.disconnect();
-        logger.error(reason);
-      });
+      i.up();
       return i;
     });
   }

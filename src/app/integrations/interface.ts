@@ -1,5 +1,7 @@
+import { Subscription } from "rxjs";
+
 interface IntegrationInterface {
-  up(): Promise<any>;
+  up(): Subscription;
 
   down(): Promise<any>;
 }
