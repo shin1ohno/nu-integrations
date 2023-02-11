@@ -42,6 +42,22 @@ describe("RoonNuimoIntegration", () => {
       [
         [
           "nuimo/xxx/operation",
+          Buffer.from(JSON.stringify({ subject: "swipeRight" })),
+        ],
+        "roon/yyy/command",
+        "next",
+      ],
+      [
+        [
+          "nuimo/xxx/operation",
+          Buffer.from(JSON.stringify({ subject: "swipeLeft" })),
+        ],
+        "roon/yyy/command",
+        "previous",
+      ],
+      [
+        [
+          "nuimo/xxx/operation",
           Buffer.from(JSON.stringify({ subject: "rotate", parameter: [2, 3] })),
         ],
         "roon/yyy/outputs/zzz/volume/set/relative",
