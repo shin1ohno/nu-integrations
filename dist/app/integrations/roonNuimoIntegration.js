@@ -1,4 +1,4 @@
-import { map, partition } from "rxjs";
+import { map, merge, partition, tap } from "rxjs";
 import { logger } from "../utils.js";
 export class RoonNuimoIntegration {
     commandTopic;
@@ -27,7 +27,7 @@ export class RoonNuimoIntegration {
     }
     up() {
         logger.info(`RoonNuimoIntegration up: ${this.desc}`);
-        this.observe(this.broker.subscribe(this.topicsToSubscribe));
+        return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe();
     }
     observe = (brokerEvents) => {
         const mapping = {
@@ -38,21 +38,10 @@ export class RoonNuimoIntegration {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
         const [roonStateObservable, roonVolumeObservable] = partition(reactionObservable, ([topic, _]) => topic === this.roonStateTopic);
         const [nuimoRotationObservable, nuimoCommandObservable] = partition(operationObservable, ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate");
-        roonStateObservable
-            .pipe(map(([_, payload]) => payload.toString()))
-            .subscribe((roonState) => this.nuimoReaction(JSON.stringify({ status: roonState })));
-        roonVolumeObservable
-            .pipe(map(([_, payload]) => payload.toString()), map((volume) => JSON.stringify({
+        return merge(roonStateObservable.pipe(map(([_, payload]) => payload.toString()), tap((roonState) => this.nuimoReaction(JSON.stringify({ status: roonState })))), roonVolumeObservable.pipe(map(([_, payload]) => payload.toString()), map((volume) => JSON.stringify({
             status: "volumeChange",
             percentage: volume,
-        })))
-            .subscribe((v) => this.nuimoReaction(v));
-        nuimoRotationObservable
-            .pipe(map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]))
-            .subscribe((volume) => this.setVolume(volume));
-        nuimoCommandObservable
-            .pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject))
-            .subscribe((subject) => this.command(mapping[subject]));
+        })), tap((v) => this.nuimoReaction(v))), nuimoRotationObservable.pipe(map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]), tap((volume) => this.setVolume(volume))), nuimoCommandObservable.pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject), tap((subject) => this.command(mapping[subject]))));
     };
     down() {
         logger.info(`RoonNuimoIntegration down: ${this.desc}`);
