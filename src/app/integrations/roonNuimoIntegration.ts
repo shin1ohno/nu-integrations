@@ -1,6 +1,6 @@
 import { Broker } from "../broker.js";
 import { IntegrationInterface } from "./interface.js";
-import { map, Observable, partition } from "rxjs";
+import { map, merge, Observable, partition, Subscription, tap } from "rxjs";
 import { logger } from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
@@ -35,12 +35,14 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     this.broker = options.broker;
   }
 
-  up(): any {
+  up(): Subscription {
     logger.info(`RoonNuimoIntegration up: ${this.desc}`);
-    this.observe(this.broker.subscribe(this.topicsToSubscribe));
+    return this.observe(
+      this.broker.subscribe(this.topicsToSubscribe),
+    ).subscribe();
   }
 
-  private observe = (brokerEvents: Observable<any>): any => {
+  private observe = (brokerEvents: Observable<any>): Observable<any> => {
     const mapping = {
       select: "playpause",
       swipeRight: "next",
@@ -60,14 +62,15 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
     );
 
-    roonStateObservable
-      .pipe(map(([_, payload]) => payload.toString()))
-      .subscribe((roonState) =>
-        this.nuimoReaction(JSON.stringify({ status: roonState })),
-      );
+    return merge(
+      roonStateObservable.pipe(
+        map(([_, payload]) => payload.toString()),
+        tap((roonState) =>
+          this.nuimoReaction(JSON.stringify({ status: roonState })),
+        ),
+      ),
 
-    roonVolumeObservable
-      .pipe(
+      roonVolumeObservable.pipe(
         map(([_, payload]) => payload.toString()),
         map((volume) =>
           JSON.stringify({
@@ -75,16 +78,19 @@ export class RoonNuimoIntegration implements IntegrationInterface {
             percentage: volume,
           }),
         ),
-      )
-      .subscribe((v: string) => this.nuimoReaction(v));
+        tap((v: string) => this.nuimoReaction(v)),
+      ),
 
-    nuimoRotationObservable
-      .pipe(map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]))
-      .subscribe((volume) => this.setVolume(volume));
+      nuimoRotationObservable.pipe(
+        map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]),
+        tap((volume) => this.setVolume(volume)),
+      ),
 
-    nuimoCommandObservable
-      .pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject))
-      .subscribe((subject) => this.command(mapping[subject]));
+      nuimoCommandObservable.pipe(
+        map(([_, payload]) => JSON.parse(payload.toString()).subject),
+        tap((subject) => this.command(mapping[subject])),
+      ),
+    );
   };
 
   down() {

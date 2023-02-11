@@ -64,7 +64,7 @@ describe("RoonNuimoIntegration", () => {
         "120",
       ],
     ].forEach(([input, out, outParam]) => {
-      observation(of(input));
+      observation(of(input)).subscribe();
       expect(b.publish).toHaveBeenLastCalledWith(out, outParam);
     });
 
