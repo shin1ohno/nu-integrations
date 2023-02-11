@@ -1,7 +1,7 @@
 import { RoonNuimoIntegration } from "app/integrations/roonNuimoIntegration";
 import { Broker } from "app/broker";
 import { BrokerConfig } from "app/brokerConfig";
-// import Rx from "rxjs";
+import { of } from "rxjs";
 
 describe("RoonNuimoIntegration", () => {
   it("", async () => {
@@ -18,40 +18,39 @@ describe("RoonNuimoIntegration", () => {
       .fn()
       .mockImplementation(() => new Promise((x, _y) => x(undefined)));
 
-    const cb = i.messageCB;
+    const observation = i["observe"];
+
     [
-      ["select", "playpause"],
-      ["swipeRight", "next"],
-      ["swipeLeft", "previous"],
-    ].forEach((i) => {
-      cb("nuimo/xxx/operation", JSON.stringify({ subject: i[0] }));
-      expect(b.publish).toHaveBeenLastCalledWith("roon/yyy/command", i[1]);
+      [
+        ["roon/yyy/outputs/zzz/volume/percent", Buffer.from("80")],
+        "nuimo/xxx/reaction",
+        JSON.stringify({ status: "volumeChange", percentage: "80" }),
+      ],
+      [
+        ["roon/yyy/state", Buffer.from("playing")],
+        "nuimo/xxx/reaction",
+        JSON.stringify({ status: "playing" }),
+      ],
+      [
+        [
+          "nuimo/xxx/operation",
+          Buffer.from(JSON.stringify({ subject: "select" })),
+        ],
+        "roon/yyy/command",
+        "playpause",
+      ],
+      [
+        [
+          "nuimo/xxx/operation",
+          Buffer.from(JSON.stringify({ subject: "rotate", parameter: [2, 3] })),
+        ],
+        "roon/yyy/outputs/zzz/volume/set/relative",
+        "120",
+      ],
+    ].forEach(([input, out, outParam]) => {
+      observation(of(input));
+      expect(b.publish).toHaveBeenLastCalledWith(out, outParam);
     });
-
-    cb(
-      "nuimo/xxx/operation",
-      JSON.stringify({ subject: "rotate", parameter: [10, 0] }),
-    );
-    expect(b.publish).toHaveBeenLastCalledWith(
-      "roon/yyy/outputs/zzz/volume/set/relative",
-      "600",
-    );
-
-    cb("roon/yyy/state", "stopped");
-    expect(b.publish).toHaveBeenLastCalledWith(
-      "nuimo/xxx/reaction",
-      JSON.stringify({ status: "stopped" }),
-    );
-
-    cb("roon/yyy/outputs/zzz/volume/percent", 10);
-    expect(b.publish).toHaveBeenLastCalledWith(
-      "nuimo/xxx/reaction",
-      JSON.stringify({
-        status: "volumeChange",
-        percentage: "10",
-      }),
-    );
-    // });
 
     await i.down().then(() => {
       expect(b.unsubscribe).toHaveBeenCalledWith([

@@ -1,7 +1,7 @@
-import {Broker} from "../broker.js";
-import {IntegrationInterface} from "./interface.js";
-import {Subscription} from "rxjs";
-import {logger} from "../utils.js";
+import { Broker } from "../broker.js";
+import { IntegrationInterface } from "./interface.js";
+import { map, Observable, partition } from "rxjs";
+import { logger } from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly commandTopic: string;
@@ -12,6 +12,7 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly roonVolumeTopic: string;
   private readonly topicsToSubscribe: string[];
   private readonly nuimoReactionTopic: string;
+  private readonly desc: string;
 
   constructor(options: {
     nuimo: string;
@@ -19,6 +20,7 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     output: string;
     broker: Broker;
   }) {
+    this.desc = `Nuimo(${options.nuimo}) <-> Roon(${options.zone}-${options.output}) <=> ${options.broker.desc})`;
     this.operationTopic = `nuimo/${options.nuimo}/operation`;
     this.commandTopic = `roon/${options.zone}/command`;
     this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
@@ -33,46 +35,62 @@ export class RoonNuimoIntegration implements IntegrationInterface {
     this.broker = options.broker;
   }
 
-  up(): Subscription {
-    return this.broker
-      .subscribe(this.topicsToSubscribe)
-      .subscribe((x) => this.messageCB(x[0], x[1], x[2]));
+  up(): any {
+    logger.info(`RoonNuimoIntegration up: ${this.desc}`);
+    this.observe(this.broker.subscribe(this.topicsToSubscribe));
   }
 
-  down() {
-    return this.broker.unsubscribe(this.topicsToSubscribe);
-  }
+  private observe = (brokerEvents: Observable<any>): any => {
+    const mapping = {
+      select: "playpause",
+      swipeRight: "next",
+      swipeLeft: "previous",
+    };
 
-  messageCB = (topic, payloadBuffer, _?) => {
-    const payloadTxt = payloadBuffer.toString();
-    if (topic !== this.operationTopic) {
-      if (topic === this.roonStateTopic) {
-        this.nuimoReaction(JSON.stringify({status: payloadTxt}));
-      } else if (topic === this.roonVolumeTopic) {
-        this.nuimoReaction(
+    const [operationObservable, reactionObservable] = partition(
+      brokerEvents,
+      ([topic, _]) => topic === this.operationTopic,
+    );
+    const [roonStateObservable, roonVolumeObservable] = partition(
+      reactionObservable,
+      ([topic, _]) => topic === this.roonStateTopic,
+    );
+    const [nuimoRotationObservable, nuimoCommandObservable] = partition(
+      operationObservable,
+      ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
+    );
+
+    roonStateObservable
+      .pipe(map(([_, payload]) => payload.toString()))
+      .subscribe((roonState) =>
+        this.nuimoReaction(JSON.stringify({ status: roonState })),
+      );
+
+    roonVolumeObservable
+      .pipe(
+        map(([_, payload]) => payload.toString()),
+        map((volume) =>
           JSON.stringify({
             status: "volumeChange",
-            percentage: payloadTxt,
+            percentage: volume,
           }),
-        );
-      } else {
-        //do nothing
-      }
-    } else {
-      const mapping = {
-        select: "playpause",
-        swipeRight: "next",
-        swipeLeft: "previous",
-      };
-      const payload: { subject: string; parameter?: [string | number] } =
-        JSON.parse(payloadTxt);
-      if (payload.subject === "rotate") {
-        this.setVolume(parseFloat(payload.parameter[0].toString()));
-      } else {
-        this.command(mapping[payload.subject]);
-      }
-    }
+        ),
+      )
+      .subscribe((v: string) => this.nuimoReaction(v));
+
+    nuimoRotationObservable
+      .pipe(map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]))
+      .subscribe((volume) => this.setVolume(volume));
+
+    nuimoCommandObservable
+      .pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject))
+      .subscribe((subject) => this.command(mapping[subject]));
   };
+
+  down() {
+    logger.info(`RoonNuimoIntegration down: ${this.desc}`);
+    return this.broker.unsubscribe(this.topicsToSubscribe);
+  }
 
   private command(payload: string) {
     this.broker.publish(this.commandTopic, payload);
@@ -84,7 +102,6 @@ export class RoonNuimoIntegration implements IntegrationInterface {
 
   private setVolume(volume: number) {
     const relativeVolume = volume * 60;
-    logger.info(relativeVolume);
     this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
   }
 }

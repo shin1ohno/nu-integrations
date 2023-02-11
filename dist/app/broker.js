@@ -5,8 +5,10 @@ const logger = pino();
 class Broker {
     client;
     config;
+    desc;
     constructor(config) {
         this.config = config;
+        this.desc = this.config.url;
     }
     connect() {
         return MQTT.connectAsync(this.config.url, this.config.options)
@@ -24,14 +26,12 @@ class Broker {
         return this.client.end();
     }
     subscribe(topic) {
-        new Promise((resolve, reject) => {
-            if (this.client) {
-                this.client.subscribe(topic).then((_) => resolve(_));
-            }
-            else {
-                reject("Client is not initiated for this broker. Call connect() before subscribe.");
-            }
-        });
+        if (this.client) {
+            this.client.subscribe(topic);
+        }
+        else {
+            logger.error("Client is not initiated for this broker. Call connect() before subscribe.");
+        }
         return this.on("message");
     }
     unsubscribe(topic) {

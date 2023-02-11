@@ -8,9 +8,11 @@ const logger = pino();
 class Broker {
   public client?: AsyncMqttClient;
   private readonly config: BrokerConfig;
+  desc: string;
 
   constructor(config: BrokerConfig) {
     this.config = config;
+    this.desc = this.config.url;
   }
 
   connect(): Promise<void> {
@@ -39,16 +41,14 @@ class Broker {
     return this.client.end();
   }
 
-  subscribe(topic): Observable<any> {
-    new Promise((resolve, reject) => {
-      if (this.client) {
-        this.client.subscribe(topic).then((_) => resolve(_));
-      } else {
-        reject(
-          "Client is not initiated for this broker. Call connect() before subscribe.",
-        );
-      }
-    });
+  subscribe(topic): Observable<[string, Buffer]> {
+    if (this.client) {
+      this.client.subscribe(topic);
+    } else {
+      logger.error(
+        "Client is not initiated for this broker. Call connect() before subscribe.",
+      );
+    }
     return this.on("message");
   }
 

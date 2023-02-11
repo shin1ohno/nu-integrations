@@ -1,3 +1,4 @@
+import { map, partition } from "rxjs";
 import { logger } from "../utils.js";
 export class RoonNuimoIntegration {
     commandTopic;
@@ -8,7 +9,9 @@ export class RoonNuimoIntegration {
     roonVolumeTopic;
     topicsToSubscribe;
     nuimoReactionTopic;
+    desc;
     constructor(options) {
+        this.desc = `Nuimo(${options.nuimo}) <-> Roon(${options.zone}-${options.output}) <=> ${options.broker.desc})`;
         this.operationTopic = `nuimo/${options.nuimo}/operation`;
         this.commandTopic = `roon/${options.zone}/command`;
         this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
@@ -23,44 +26,39 @@ export class RoonNuimoIntegration {
         this.broker = options.broker;
     }
     up() {
-        return this.broker
-            .subscribe(this.topicsToSubscribe)
-            .subscribe((x) => this.messageCB(x[0], x[1], x[2]));
+        logger.info(`RoonNuimoIntegration up: ${this.desc}`);
+        this.observe(this.broker.subscribe(this.topicsToSubscribe));
     }
+    observe = (brokerEvents) => {
+        const mapping = {
+            select: "playpause",
+            swipeRight: "next",
+            swipeLeft: "previous",
+        };
+        const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
+        const [roonStateObservable, roonVolumeObservable] = partition(reactionObservable, ([topic, _]) => topic === this.roonStateTopic);
+        const [nuimoRotationObservable, nuimoCommandObservable] = partition(operationObservable, ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate");
+        roonStateObservable
+            .pipe(map(([_, payload]) => payload.toString()))
+            .subscribe((roonState) => this.nuimoReaction(JSON.stringify({ status: roonState })));
+        roonVolumeObservable
+            .pipe(map(([_, payload]) => payload.toString()), map((volume) => JSON.stringify({
+            status: "volumeChange",
+            percentage: volume,
+        })))
+            .subscribe((v) => this.nuimoReaction(v));
+        nuimoRotationObservable
+            .pipe(map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]))
+            .subscribe((volume) => this.setVolume(volume));
+        nuimoCommandObservable
+            .pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject))
+            .subscribe((subject) => this.command(mapping[subject]));
+        return brokerEvents;
+    };
     down() {
+        logger.info(`RoonNuimoIntegration down: ${this.desc}`);
         return this.broker.unsubscribe(this.topicsToSubscribe);
     }
-    messageCB = (topic, payloadBuffer, _) => {
-        const payloadTxt = payloadBuffer.toString();
-        if (topic !== this.operationTopic) {
-            if (topic === this.roonStateTopic) {
-                this.nuimoReaction(JSON.stringify({ status: payloadTxt }));
-            }
-            else if (topic === this.roonVolumeTopic) {
-                this.nuimoReaction(JSON.stringify({
-                    status: "volumeChange",
-                    percentage: payloadTxt,
-                }));
-            }
-            else {
-                //do nothing
-            }
-        }
-        else {
-            const mapping = {
-                select: "playpause",
-                swipeRight: "next",
-                swipeLeft: "previous",
-            };
-            const payload = JSON.parse(payloadTxt);
-            if (payload.subject === "rotate") {
-                this.setVolume(parseFloat(payload.parameter[0].toString()));
-            }
-            else {
-                this.command(mapping[payload.subject]);
-            }
-        }
-    };
     command(payload) {
         this.broker.publish(this.commandTopic, payload);
     }
@@ -69,7 +67,6 @@ export class RoonNuimoIntegration {
     }
     setVolume(volume) {
         const relativeVolume = volume * 60;
-        logger.info(relativeVolume);
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
     }
 }

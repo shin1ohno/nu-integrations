@@ -4,7 +4,6 @@
   "description": "",
   "scripts": {
     "start": "node ./dist/index.js",
-    "start:dev": "npm run build:watch & npm run start",
     "clean": "rm -rf coverage dist tmp",
     "prebuild": "npm run prettier & npm run lint",
     "build": "tsc -p tsconfig.json",
