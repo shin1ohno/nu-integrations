@@ -69,7 +69,7 @@ describe("RoonNuimoIntegration", () => {
     });
   });
 
-  it("has the right routing", async () => {
+  it("doesn't route when insufficient ifno given", async () => {
     const b = new Broker(new BrokerConfig());
     const i = new RoonNuimoIntegration({
       nuimo: "xxx",
