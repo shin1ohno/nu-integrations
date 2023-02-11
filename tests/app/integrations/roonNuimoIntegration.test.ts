@@ -4,7 +4,7 @@ import { BrokerConfig } from "app/brokerConfig";
 import { of } from "rxjs";
 
 describe("RoonNuimoIntegration", () => {
-  it("", async () => {
+  it("has the right routing", async () => {
     const b = new Broker(new BrokerConfig());
     const i = new RoonNuimoIntegration({
       nuimo: "xxx",
@@ -67,6 +67,45 @@ describe("RoonNuimoIntegration", () => {
       observation(of(input)).subscribe();
       expect(b.publish).toHaveBeenLastCalledWith(out, outParam);
     });
+  });
+
+  it("has the right routing", async () => {
+    const b = new Broker(new BrokerConfig());
+    const i = new RoonNuimoIntegration({
+      nuimo: "xxx",
+      zone: "yyy",
+      output: "zzz",
+      broker: b,
+    });
+
+    b.publish = jest.fn();
+    b.unsubscribe = jest
+      .fn()
+      .mockImplementation(() => new Promise((x, _y) => x(undefined)));
+
+    const observation = i["observe"];
+
+    const input = [
+      "nuimo/xxx/operation",
+      Buffer.from(JSON.stringify({ subject: "rotate" })),
+    ];
+
+    observation(of(input)).subscribe();
+    expect(b.publish).not.toBeCalled();
+  });
+
+  it("unsubscribes when down", async () => {
+    const b = new Broker(new BrokerConfig());
+    const i = new RoonNuimoIntegration({
+      nuimo: "xxx",
+      zone: "yyy",
+      output: "zzz",
+      broker: b,
+    });
+
+    b.unsubscribe = jest
+      .fn()
+      .mockImplementation(() => new Promise((x, _y) => x(undefined)));
 
     await i.down().then(() => {
       expect(b.unsubscribe).toHaveBeenCalledWith([

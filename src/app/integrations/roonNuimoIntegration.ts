@@ -1,6 +1,14 @@
 import { Broker } from "../broker.js";
 import { IntegrationInterface } from "./interface.js";
-import { map, merge, Observable, partition, Subscription, tap } from "rxjs";
+import {
+  filter,
+  map,
+  merge,
+  Observable,
+  partition,
+  Subscription,
+  tap,
+} from "rxjs";
 import { logger } from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
@@ -82,7 +90,12 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       ),
 
       nuimoRotationObservable.pipe(
-        map(([_, payload]) => JSON.parse(payload.toString()).parameter[0]),
+        map(([_, payload]) => JSON.parse(payload.toString())),
+        filter(
+          (p: { parameter: any }) =>
+            p.parameter && typeof p.parameter === "object",
+        ),
+        map((p: { parameter: object }) => p.parameter[0]),
         tap((volume) => this.setVolume(volume)),
       ),
 
