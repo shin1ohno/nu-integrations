@@ -53,7 +53,6 @@ export class RoonNuimoIntegration {
         nuimoCommandObservable
             .pipe(map(([_, payload]) => JSON.parse(payload.toString()).subject))
             .subscribe((subject) => this.command(mapping[subject]));
-        return brokerEvents;
     };
     down() {
         logger.info(`RoonNuimoIntegration down: ${this.desc}`);
@@ -70,4 +69,3 @@ export class RoonNuimoIntegration {
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
     }
 }
-//# sourceMappingURL=roonNuimoIntegration.js.map
