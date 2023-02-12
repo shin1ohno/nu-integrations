@@ -68,4 +68,3 @@ export class RoonNuimoIntegration {
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
     }
 }
-//# sourceMappingURL=roonNuimoIntegration.js.map
