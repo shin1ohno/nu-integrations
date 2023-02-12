@@ -1,5 +1,5 @@
-import {Broker} from "../broker.js";
-import {IntegrationInterface} from "./interface.js";
+import { Broker } from "../broker.js";
+import { IntegrationInterface } from "./interface.js";
 import {
   filter,
   map,
@@ -9,7 +9,7 @@ import {
   Subscription,
   tap,
 } from "rxjs";
-import {logger} from "../utils.js";
+import { logger } from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly commandTopic: string;
@@ -51,12 +51,6 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   }
 
   private observe = (brokerEvents: Observable<any>): Observable<any> => {
-    const mapping = {
-      select: "playpause",
-      swipeRight: "next",
-      swipeLeft: "previous",
-    };
-
     const [operationObservable, reactionObservable] = partition(
       brokerEvents,
       ([topic, _]) => topic === this.operationTopic,
@@ -66,17 +60,20 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
       this.observeNuimoRotate(operationObservable),
-      this.ObserveNuimoCommand(operationObservable, mapping),
+      this.ObserveNuimoCommand(operationObservable),
     );
   };
 
-  private ObserveNuimoCommand(operationObservable: Observable<any>, mapping: {
-    select: string;
-    swipeRight: string;
-    swipeLeft: string
-  }) {
+  private ObserveNuimoCommand(operationObservable: Observable<any>) {
+    const mapping = {
+      select: "playpause",
+      swipeRight: "next",
+      swipeLeft: "previous",
+    };
     return operationObservable.pipe(
-      filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"),
+      filter(
+        ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
+      ),
       map(([_, payload]) => JSON.parse(payload.toString()).subject),
       tap((subject) => this.command(mapping[subject])),
     );
@@ -84,7 +81,9 @@ export class RoonNuimoIntegration implements IntegrationInterface {
 
   private observeNuimoRotate(operationObservable: Observable<any>) {
     return operationObservable.pipe(
-      filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"),
+      filter(
+        ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
+      ),
       map(([_, payload]) => JSON.parse(payload.toString())),
       filter(
         (p: { parameter: any }) =>
@@ -114,8 +113,8 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       filter(([topic, _]) => topic === this.roonStateTopic),
       map(([_, payload]) => payload.toString()),
       map((roonState) =>
-        this.nuimoReaction(JSON.stringify({status: roonState})),
-      )
+        this.nuimoReaction(JSON.stringify({ status: roonState })),
+      ),
     );
   }
 

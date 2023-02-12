@@ -24,17 +24,17 @@ describe("RoonNuimoIntegration", () => {
       [
         ["roon/yyy/outputs/zzz/volume/percent", Buffer.from("80")],
         "nuimo/xxx/reaction",
-        JSON.stringify({status: "volumeChange", percentage: "80"}),
+        JSON.stringify({ status: "volumeChange", percentage: "80" }),
       ],
       [
         ["roon/yyy/state", Buffer.from("playing")],
         "nuimo/xxx/reaction",
-        JSON.stringify({status: "playing"}),
+        JSON.stringify({ status: "playing" }),
       ],
       [
         [
           "nuimo/xxx/operation",
-          Buffer.from(JSON.stringify({subject: "select"})),
+          Buffer.from(JSON.stringify({ subject: "select" })),
         ],
         "roon/yyy/command",
         "playpause",
@@ -42,7 +42,7 @@ describe("RoonNuimoIntegration", () => {
       [
         [
           "nuimo/xxx/operation",
-          Buffer.from(JSON.stringify({subject: "swipeRight"})),
+          Buffer.from(JSON.stringify({ subject: "swipeRight" })),
         ],
         "roon/yyy/command",
         "next",
@@ -50,7 +50,7 @@ describe("RoonNuimoIntegration", () => {
       [
         [
           "nuimo/xxx/operation",
-          Buffer.from(JSON.stringify({subject: "swipeLeft"})),
+          Buffer.from(JSON.stringify({ subject: "swipeLeft" })),
         ],
         "roon/yyy/command",
         "previous",
@@ -58,7 +58,7 @@ describe("RoonNuimoIntegration", () => {
       [
         [
           "nuimo/xxx/operation",
-          Buffer.from(JSON.stringify({subject: "rotate", parameter: [2, 3]})),
+          Buffer.from(JSON.stringify({ subject: "rotate", parameter: [2, 3] })),
         ],
         "roon/yyy/outputs/zzz/volume/set/relative",
         "120",
