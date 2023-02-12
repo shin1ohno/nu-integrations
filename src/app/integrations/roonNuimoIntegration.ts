@@ -1,5 +1,5 @@
-import { Broker } from "../broker.js";
-import { IntegrationInterface } from "./interface.js";
+import {Broker} from "../broker.js";
+import {IntegrationInterface} from "./interface.js";
 import {
   filter,
   map,
@@ -9,7 +9,7 @@ import {
   Subscription,
   tap,
 } from "rxjs";
-import { logger } from "../utils.js";
+import {logger} from "../utils.js";
 
 export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly commandTopic: string;
@@ -61,50 +61,63 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       brokerEvents,
       ([topic, _]) => topic === this.operationTopic,
     );
-    const [roonStateObservable, roonVolumeObservable] = partition(
-      reactionObservable,
-      ([topic, _]) => topic === this.roonStateTopic,
-    );
-    const [nuimoRotationObservable, nuimoCommandObservable] = partition(
-      operationObservable,
-      ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
-    );
 
     return merge(
-      roonStateObservable.pipe(
-        map(([_, payload]) => payload.toString()),
-        tap((roonState) =>
-          this.nuimoReaction(JSON.stringify({ status: roonState })),
-        ),
-      ),
-
-      roonVolumeObservable.pipe(
-        map(([_, payload]) => payload.toString()),
-        map((volume) =>
-          JSON.stringify({
-            status: "volumeChange",
-            percentage: volume,
-          }),
-        ),
-        tap((v: string) => this.nuimoReaction(v)),
-      ),
-
-      nuimoRotationObservable.pipe(
-        map(([_, payload]) => JSON.parse(payload.toString())),
-        filter(
-          (p: { parameter: any }) =>
-            p.parameter && typeof p.parameter === "object",
-        ),
-        map((p: { parameter: object }) => p.parameter[0]),
-        tap((volume) => this.setVolume(volume)),
-      ),
-
-      nuimoCommandObservable.pipe(
-        map(([_, payload]) => JSON.parse(payload.toString()).subject),
-        tap((subject) => this.command(mapping[subject])),
-      ),
+      this.observeRoonState(reactionObservable),
+      this.observeRoonVolume(reactionObservable),
+      this.observeNuimoRotate(operationObservable),
+      this.ObserveNuimoCommand(operationObservable, mapping),
     );
   };
+
+  private ObserveNuimoCommand(operationObservable: Observable<any>, mapping: {
+    select: string;
+    swipeRight: string;
+    swipeLeft: string
+  }) {
+    return operationObservable.pipe(
+      filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"),
+      map(([_, payload]) => JSON.parse(payload.toString()).subject),
+      tap((subject) => this.command(mapping[subject])),
+    );
+  }
+
+  private observeNuimoRotate(operationObservable: Observable<any>) {
+    return operationObservable.pipe(
+      filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"),
+      map(([_, payload]) => JSON.parse(payload.toString())),
+      filter(
+        (p: { parameter: any }) =>
+          p.parameter && typeof p.parameter === "object",
+      ),
+      map((p: { parameter: object }) => p.parameter[0]),
+      tap((volume) => this.setVolume(volume)),
+    );
+  }
+
+  private observeRoonVolume(reactionObservable: Observable<any>) {
+    return reactionObservable.pipe(
+      filter(([topic, _]) => topic === this.roonVolumeTopic),
+      map(([_, payload]) => payload.toString()),
+      map((volume) =>
+        JSON.stringify({
+          status: "volumeChange",
+          percentage: volume,
+        }),
+      ),
+      map((v: string) => this.nuimoReaction(v)),
+    );
+  }
+
+  private observeRoonState(reactionObservable: Observable<any>) {
+    return reactionObservable.pipe(
+      filter(([topic, _]) => topic === this.roonStateTopic),
+      map(([_, payload]) => payload.toString()),
+      map((roonState) =>
+        this.nuimoReaction(JSON.stringify({status: roonState})),
+      )
+    );
+  }
 
   down() {
     logger.info(`RoonNuimoIntegration down: ${this.desc}`);
