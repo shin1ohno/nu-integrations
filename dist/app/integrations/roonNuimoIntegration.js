@@ -30,15 +30,15 @@ export class RoonNuimoIntegration {
         return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe();
     }
     observe = (brokerEvents) => {
+        const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
+        return merge(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.ObserveNuimoCommand(operationObservable));
+    };
+    ObserveNuimoCommand(operationObservable) {
         const mapping = {
             select: "playpause",
             swipeRight: "next",
             swipeLeft: "previous",
         };
-        const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
-        return merge(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.ObserveNuimoCommand(operationObservable, mapping));
-    };
-    ObserveNuimoCommand(operationObservable, mapping) {
         return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => JSON.parse(payload.toString()).subject), tap((subject) => this.command(mapping[subject])));
     }
     observeNuimoRotate(operationObservable) {
