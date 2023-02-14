@@ -1,6 +1,6 @@
 import { filter, map, merge, partition, tap, } from "rxjs";
 import { logger } from "../utils.js";
-export class RoonNuimoIntegration {
+export class RoonNuimoMapping {
     commandTopic;
     operationTopic;
     broker;
@@ -26,14 +26,13 @@ export class RoonNuimoIntegration {
         this.broker = options.broker;
     }
     up() {
-        logger.info(`RoonNuimoIntegration up: ${this.desc}`);
-        return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe();
+        return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe((x) => logger.info(x));
     }
     observe = (brokerEvents) => {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
-        return merge(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.ObserveNuimoCommand(operationObservable));
+        return merge(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable));
     };
-    ObserveNuimoCommand(operationObservable) {
+    observeNuimoCommand(operationObservable) {
         const mapping = {
             select: "playpause",
             swipeRight: "next",
