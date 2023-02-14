@@ -1,15 +1,15 @@
 import { MappingInterface } from "./interface.js";
-import Rx from "rxjs";
+import Rx, { Subscription } from "rxjs";
 
 class NullMapping implements MappingInterface {
   public readonly desc = "NULL";
 
-  up() {
+  up(): Subscription {
     return Rx.Subscription.EMPTY;
   }
 
-  down() {
-    return new Promise((_x, _y) => undefined);
+  down(): Promise<void> {
+    return new Promise((x, _y) => x(undefined));
   }
 }
 

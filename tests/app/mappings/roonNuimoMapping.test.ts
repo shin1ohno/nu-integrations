@@ -64,7 +64,7 @@ describe("RoonNuimoIntegration", () => {
         "120",
       ],
     ]) {
-      await observation(of(input)).subscribe();
+      await observation(of(input as [string, Buffer])).subscribe();
       expect(b.publish).toHaveBeenLastCalledWith(out, outParam);
     }
   });
@@ -85,7 +85,7 @@ describe("RoonNuimoIntegration", () => {
 
     const observation = i["observe"];
 
-    const input = [
+    const input: [string, Buffer] = [
       "nuimo/xxx/operation",
       Buffer.from(JSON.stringify({ subject: "rotate" })),
     ];

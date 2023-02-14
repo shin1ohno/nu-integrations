@@ -52,16 +52,16 @@ class Broker {
     return this.on("message");
   }
 
-  unsubscribe(topic) {
+  unsubscribe(topic): Promise<void> {
     return this.client.unsubscribe(topic);
   }
 
-  publish(topic, payload) {
+  publish(topic, payload): Promise<void> {
     return this.client.publish(topic, payload);
   }
 
-  private on(event): Observable<any> {
-    return Rx.fromEvent(this.client, event);
+  private on(event): Observable<[string, Buffer]> {
+    return Rx.fromEvent(this.client, event) as Observable<[string, Buffer]>;
   }
 }
 

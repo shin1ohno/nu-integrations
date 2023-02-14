@@ -4,7 +4,7 @@ interface MappingInterface {
   readonly desc: string;
   up(): Subscription;
 
-  down(): Promise<any>;
+  down(): Promise<void>;
 }
 
 export { MappingInterface };

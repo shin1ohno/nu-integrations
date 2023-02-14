@@ -49,7 +49,9 @@ export class RoonNuimoMapping implements MappingInterface {
     ).subscribe((x) => logger.info(x));
   }
 
-  private observe = (brokerEvents: Observable<any>): Observable<any> => {
+  private observe = (
+    brokerEvents: Observable<[string, Buffer]>,
+  ): Observable<string> => {
     const [operationObservable, reactionObservable] = partition(
       brokerEvents,
       ([topic, _]) => topic === this.operationTopic,
@@ -63,7 +65,9 @@ export class RoonNuimoMapping implements MappingInterface {
     );
   };
 
-  private observeNuimoCommand(operationObservable: Observable<any>) {
+  private observeNuimoCommand(
+    operationObservable: Observable<[string, Buffer]>,
+  ): Observable<string> {
     const mapping = {
       select: "playpause",
       swipeRight: "next",
@@ -73,27 +77,32 @@ export class RoonNuimoMapping implements MappingInterface {
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),
-      map(([_, payload]) => JSON.parse(payload.toString()).subject),
+      map(([_, payload]): string => JSON.parse(payload.toString()).subject),
       tap((subject) => this.command(mapping[subject])),
     );
   }
 
-  private observeNuimoRotate(operationObservable: Observable<any>) {
+  private observeNuimoRotate(
+    operationObservable: Observable<[string, Buffer]>,
+  ): Observable<string> {
     return operationObservable.pipe(
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
       ),
       map(([_, payload]) => JSON.parse(payload.toString())),
       filter(
-        (p: { parameter: any }) =>
+        (p: { parameter: Record<string, string> }) =>
           p.parameter && typeof p.parameter === "object",
       ),
-      map((p: { parameter: object }) => p.parameter[0]),
-      tap((volume) => this.setVolume(volume)),
+      map((p: { parameter: object }): number => p.parameter[0]),
+      tap((volume: number) => this.setVolume(volume)),
+      map((volume) => volume.toString()),
     );
   }
 
-  private observeRoonVolume(reactionObservable: Observable<any>) {
+  private observeRoonVolume(
+    reactionObservable: Observable<[string, Buffer]>,
+  ): Observable<string> {
     return reactionObservable.pipe(
       filter(([topic, _]) => topic === this.roonVolumeTopic),
       map(([_, payload]) => payload.toString()),
@@ -103,35 +112,40 @@ export class RoonNuimoMapping implements MappingInterface {
           percentage: volume,
         }),
       ),
-      map((v: string) => this.nuimoReaction(v)),
+      map((v: string): string => this.nuimoReaction(v)),
     );
   }
 
-  private observeRoonState(reactionObservable: Observable<any>) {
+  private observeRoonState(
+    reactionObservable: Observable<[string, Buffer]>,
+  ): Observable<string> {
     return reactionObservable.pipe(
       filter(([topic, _]) => topic === this.roonStateTopic),
       map(([_, payload]) => payload.toString()),
-      map((roonState) =>
+      map((roonState): string =>
         this.nuimoReaction(JSON.stringify({ status: roonState })),
       ),
     );
   }
 
-  down() {
+  down(): Promise<void> {
     logger.info(`RoonNuimoIntegration down: ${this.desc}`);
     return this.broker.unsubscribe(this.topicsToSubscribe);
   }
 
-  private command(payload: string) {
+  private command(payload: string): string {
     this.broker.publish(this.commandTopic, payload);
+    return payload;
   }
 
-  private nuimoReaction(payload: string) {
+  private nuimoReaction(payload: string): string {
     this.broker.publish(this.nuimoReactionTopic, payload);
+    return payload;
   }
 
-  private setVolume(volume: number) {
+  private setVolume(volume: number): string {
     const relativeVolume = volume * 60;
     this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
+    return relativeVolume.toString();
   }
 }
