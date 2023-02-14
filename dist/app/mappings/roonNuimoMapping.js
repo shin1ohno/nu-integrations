@@ -41,7 +41,7 @@ export class RoonNuimoMapping {
         return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => JSON.parse(payload.toString()).subject), tap((subject) => this.command(mapping[subject])));
     }
     observeNuimoRotate(operationObservable) {
-        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"), map(([_, payload]) => JSON.parse(payload.toString())), filter((p) => p.parameter && typeof p.parameter === "object"), map((p) => p.parameter[0]), tap((volume) => this.setVolume(volume)));
+        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"), map(([_, payload]) => JSON.parse(payload.toString())), filter((p) => p.parameter && typeof p.parameter === "object"), map((p) => p.parameter[0]), tap((volume) => this.setVolume(volume)), map((volume) => volume.toString()));
     }
     observeRoonVolume(reactionObservable) {
         return reactionObservable.pipe(filter(([topic, _]) => topic === this.roonVolumeTopic), map(([_, payload]) => payload.toString()), map((volume) => JSON.stringify({
@@ -58,12 +58,15 @@ export class RoonNuimoMapping {
     }
     command(payload) {
         this.broker.publish(this.commandTopic, payload);
+        return payload;
     }
     nuimoReaction(payload) {
         this.broker.publish(this.nuimoReactionTopic, payload);
+        return payload;
     }
     setVolume(volume) {
         const relativeVolume = volume * 60;
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
+        return relativeVolume.toString();
     }
 }

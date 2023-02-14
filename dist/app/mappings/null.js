@@ -5,7 +5,7 @@ class NullMapping {
         return Rx.Subscription.EMPTY;
     }
     down() {
-        return new Promise((_x, _y) => undefined);
+        return new Promise((x, _y) => x(undefined));
     }
 }
 export { NullMapping };
