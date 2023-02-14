@@ -78,6 +78,7 @@ export class RoonNuimoMapping implements MappingInterface {
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),
       map(([_, payload]): string => JSON.parse(payload.toString()).subject),
+      filter((subject) => typeof mapping[subject] !== "undefined"),
       tap((subject) => this.command(mapping[subject])),
     );
   }
