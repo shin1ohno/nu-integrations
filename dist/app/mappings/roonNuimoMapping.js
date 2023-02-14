@@ -1,4 +1,4 @@
-import { filter, map, merge, partition, tap, } from "rxjs";
+import { filter, map, mergeAll, of, partition, tap, } from "rxjs";
 import { logger } from "../utils.js";
 export class RoonNuimoMapping {
     commandTopic;
@@ -30,7 +30,7 @@ export class RoonNuimoMapping {
     }
     observe = (brokerEvents) => {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
-        return merge(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable));
+        return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
     };
     observeNuimoCommand(operationObservable) {
         const mapping = {
@@ -38,7 +38,7 @@ export class RoonNuimoMapping {
             swipeRight: "next",
             swipeLeft: "previous",
         };
-        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => JSON.parse(payload.toString()).subject), tap((subject) => this.command(mapping[subject])));
+        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => JSON.parse(payload.toString()).subject), filter((subject) => typeof mapping[subject] !== "undefined"), tap((subject) => this.command(mapping[subject])));
     }
     observeNuimoRotate(operationObservable) {
         return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"), map(([_, payload]) => JSON.parse(payload.toString())), filter((p) => p.parameter && typeof p.parameter === "object"), map((p) => p.parameter[0]), tap((volume) => this.setVolume(volume)), map((volume) => volume.toString()));
