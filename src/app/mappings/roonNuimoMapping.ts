@@ -3,8 +3,9 @@ import { MappingInterface } from "./interface.js";
 import {
   filter,
   map,
-  merge,
+  mergeAll,
   Observable,
+  of,
   partition,
   Subscription,
   tap,
@@ -57,12 +58,12 @@ export class RoonNuimoMapping implements MappingInterface {
       ([topic, _]) => topic === this.operationTopic,
     );
 
-    return merge(
+    return of(
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
       this.observeNuimoRotate(operationObservable),
       this.observeNuimoCommand(operationObservable),
-    );
+    ).pipe(mergeAll());
   };
 
   private observeNuimoCommand(
