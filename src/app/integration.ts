@@ -1,8 +1,10 @@
 import { Broker } from "./broker.js";
 import { BrokerConfig } from "./brokerConfig.js";
-import { RoonNuimoIntegration } from "./integrations/roonNuimoIntegration.js";
-import { IntegrationInterface } from "./integrations/interface.js";
-import Rx from "rxjs";
+import { RoonNuimoMapping } from "./mappings/roonNuimoMapping.js";
+import { MappingInterface } from "./mappings/interface.js";
+import { NullMapping } from "./mappings/null.js";
+import { Subscription } from "rxjs";
+import { logger } from "./utils.js";
 
 declare type nuimoOptions = { name: "nuimo"; id: string };
 declare type roonOptions = { name: "roon"; zone: string; output: string };
@@ -11,23 +13,15 @@ declare type IntegrationOptions = {
   controller: nuimoOptions;
 };
 
-class NullIntegration implements IntegrationInterface {
-  up() {
-    return Rx.Subscription.EMPTY;
-  }
-
-  down() {
-    return new Promise((_x, _y) => undefined);
-  }
-}
-
 class Integration {
   private readonly options: IntegrationOptions;
   private readonly broker: Broker;
+  private readonly mapping: MappingInterface;
 
   constructor(options: IntegrationOptions, broker: Broker) {
     this.options = options;
     this.broker = broker;
+    this.mapping = this.routeMapping();
   }
 
   static all(): Integration[] {
@@ -74,25 +68,50 @@ class Integration {
     );
   }
 
-  up(): Promise<IntegrationInterface> {
-    const i = this.integration();
-    return this.broker.connect().then((): IntegrationInterface => {
-      i.up();
-      return i;
-    });
+  up(): Promise<Integration> {
+    return this.broker
+      .connect()
+      .then((): Subscription => this.mapping.up())
+      .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
+      .then((): Integration => this);
   }
 
-  private integration() {
+  down(): Promise<void> {
+    return this.mapping.down();
+  }
+
+  next(): Integration {
+    const controlled = Integration.all()
+      .filter((i) => i.options.controller.name === this.options.controller.name)
+      .filter((i) => i.options.controller.id === this.options.controller.id);
+    const n = controlled.indexOf(this);
+
+    if (controlled.length === n + 1) {
+      const i = controlled.at(0);
+      return i as Integration;
+    } else {
+      const i = controlled.at(n + 1);
+      return i as Integration;
+    }
+  }
+
+  switchToNext(): Promise<Integration> {
+    this.down();
+    const m = this.next();
+    return m.up();
+  }
+
+  private routeMapping(): MappingInterface {
     switch (`${this.options.app.name}-${this.options.controller.name}`) {
       case "roon-nuimo":
-        return new RoonNuimoIntegration({
+        return new RoonNuimoMapping({
           nuimo: this.options.controller.id,
           zone: this.options.app.zone,
           output: this.options.app.output,
           broker: this.broker,
         });
       default:
-        return new NullIntegration();
+        return new NullMapping();
     }
   }
 }

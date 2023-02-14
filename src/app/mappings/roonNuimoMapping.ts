@@ -1,5 +1,5 @@
 import { Broker } from "../broker.js";
-import { IntegrationInterface } from "./interface.js";
+import { MappingInterface } from "./interface.js";
 import {
   filter,
   map,
@@ -11,7 +11,7 @@ import {
 } from "rxjs";
 import { logger } from "../utils.js";
 
-export class RoonNuimoIntegration implements IntegrationInterface {
+export class RoonNuimoMapping implements MappingInterface {
   private readonly commandTopic: string;
   private readonly operationTopic: string;
   private readonly broker: Broker;
@@ -20,7 +20,7 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   private readonly roonVolumeTopic: string;
   private readonly topicsToSubscribe: string[];
   private readonly nuimoReactionTopic: string;
-  private readonly desc: string;
+  public readonly desc: string;
 
   constructor(options: {
     nuimo: string;
@@ -44,10 +44,9 @@ export class RoonNuimoIntegration implements IntegrationInterface {
   }
 
   up(): Subscription {
-    logger.info(`RoonNuimoIntegration up: ${this.desc}`);
     return this.observe(
       this.broker.subscribe(this.topicsToSubscribe),
-    ).subscribe();
+    ).subscribe((x) => logger.info(x));
   }
 
   private observe = (brokerEvents: Observable<any>): Observable<any> => {
@@ -60,11 +59,11 @@ export class RoonNuimoIntegration implements IntegrationInterface {
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
       this.observeNuimoRotate(operationObservable),
-      this.ObserveNuimoCommand(operationObservable),
+      this.observeNuimoCommand(operationObservable),
     );
   };
 
-  private ObserveNuimoCommand(operationObservable: Observable<any>) {
+  private observeNuimoCommand(operationObservable: Observable<any>) {
     const mapping = {
       select: "playpause",
       swipeRight: "next",

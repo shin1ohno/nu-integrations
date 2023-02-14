@@ -1,4 +1,4 @@
-import { RoonNuimoIntegration } from "app/integrations/roonNuimoIntegration";
+import { RoonNuimoMapping } from "app/mappings/roonNuimoMapping";
 import { Broker } from "app/broker";
 import { BrokerConfig } from "app/brokerConfig";
 import { of } from "rxjs";
@@ -6,7 +6,7 @@ import { of } from "rxjs";
 describe("RoonNuimoIntegration", () => {
   it("has the right routing", async () => {
     const b = new Broker(new BrokerConfig());
-    const i = new RoonNuimoIntegration({
+    const i = new RoonNuimoMapping({
       nuimo: "xxx",
       zone: "yyy",
       output: "zzz",
@@ -71,7 +71,7 @@ describe("RoonNuimoIntegration", () => {
 
   it("doesn't route when insufficient ifno given", async () => {
     const b = new Broker(new BrokerConfig());
-    const i = new RoonNuimoIntegration({
+    const i = new RoonNuimoMapping({
       nuimo: "xxx",
       zone: "yyy",
       output: "zzz",
@@ -96,7 +96,7 @@ describe("RoonNuimoIntegration", () => {
 
   it("unsubscribes when down", async () => {
     const b = new Broker(new BrokerConfig());
-    const i = new RoonNuimoIntegration({
+    const i = new RoonNuimoMapping({
       nuimo: "xxx",
       zone: "yyy",
       output: "zzz",

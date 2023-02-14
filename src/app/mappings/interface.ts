@@ -1,9 +1,10 @@
 import { Subscription } from "rxjs";
 
-interface IntegrationInterface {
+interface MappingInterface {
+  readonly desc: string;
   up(): Subscription;
 
   down(): Promise<any>;
 }
 
-export { IntegrationInterface };
+export { MappingInterface };
