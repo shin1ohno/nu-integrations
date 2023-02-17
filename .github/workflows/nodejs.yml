@@ -22,10 +22,11 @@ jobs:
       - run: npm run lint --if-present
       - run: npm test
       - run: npm run clean
-      - run: npm run build:release --if-present
+      
   push:
     runs-on: build
     steps:
+      - run: npm run build:release --if-present
       - run: |
           chmod +x ./dist/index.js
           git add dist
