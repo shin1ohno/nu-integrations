@@ -23,6 +23,9 @@ jobs:
       - run: npm test
       - run: npm run clean
       - run: npm run build:release --if-present
+  push:
+    runs-on: build
+    steps:
       - run: |
           chmod +x ./dist/index.js
           git add dist
