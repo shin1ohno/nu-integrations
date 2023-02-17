@@ -23,7 +23,12 @@ class Broker {
             .catch((reason) => logger.error(reason));
     }
     disconnect() {
-        return this.client.end();
+        if (this.client) {
+            return this.client.end();
+        }
+        else {
+            return new Promise((x, _) => x(undefined));
+        }
     }
     subscribe(topic) {
         if (this.client) {
@@ -35,7 +40,12 @@ class Broker {
         return this.on("message");
     }
     unsubscribe(topic) {
-        return this.client.unsubscribe(topic);
+        if (this.client) {
+            return this.client.unsubscribe(topic);
+        }
+        else {
+            return new Promise((x, _) => x(undefined));
+        }
     }
     publish(topic, payload) {
         return this.client.publish(topic, payload);

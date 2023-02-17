@@ -1,6 +1,7 @@
 import Rx from "rxjs";
 class NullMapping {
     desc = "NULL";
+    integration;
     up() {
         return Rx.Subscription.EMPTY;
     }
