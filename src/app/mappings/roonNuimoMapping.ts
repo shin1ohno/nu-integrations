@@ -11,6 +11,7 @@ import {
   tap,
 } from "rxjs";
 import { logger } from "../utils.js";
+import { Integration } from "../integration.js";
 
 export class RoonNuimoMapping implements MappingInterface {
   private readonly commandTopic: string;
@@ -22,6 +23,7 @@ export class RoonNuimoMapping implements MappingInterface {
   private readonly topicsToSubscribe: string[];
   private readonly nuimoReactionTopic: string;
   public readonly desc: string;
+  public integration: Integration;
 
   constructor(options: {
     nuimo: string;
@@ -50,6 +52,10 @@ export class RoonNuimoMapping implements MappingInterface {
     ).subscribe((x) => logger.info(x));
   }
 
+  down(): Promise<void> {
+    return this.broker.unsubscribe(this.topicsToSubscribe);
+  }
+
   private observe = (
     brokerEvents: Observable<[string, Buffer]>,
   ): Observable<string> => {
@@ -73,14 +79,24 @@ export class RoonNuimoMapping implements MappingInterface {
       select: "playpause",
       swipeRight: "next",
       swipeLeft: "previous",
+      longTouchBottom: "switchApp",
     };
     return operationObservable.pipe(
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),
-      map(([_, payload]): string => JSON.parse(payload.toString()).subject),
-      filter((subject) => typeof mapping[subject] !== "undefined"),
-      tap((subject) => this.command(mapping[subject])),
+      map(
+        ([_, payload]): string =>
+          mapping[JSON.parse(payload.toString()).subject],
+      ),
+      filter((c) => typeof c !== "undefined"),
+      tap((command) => {
+        if (command === "switchApp") {
+            logger.info(`Switching from :${this.desc}`)
+        } else {
+          this.command(command);
+        }
+      }),
     );
   }
 
@@ -128,11 +144,6 @@ export class RoonNuimoMapping implements MappingInterface {
         this.nuimoReaction(JSON.stringify({ status: roonState })),
       ),
     );
-  }
-
-  down(): Promise<void> {
-    logger.info(`RoonNuimoIntegration down: ${this.desc}`);
-    return this.broker.unsubscribe(this.topicsToSubscribe);
   }
 
   private command(payload: string): string {

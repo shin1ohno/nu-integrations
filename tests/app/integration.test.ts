@@ -11,8 +11,9 @@ describe("Integration", () => {
   });
 
   describe("up", () => {
-    it("should initialise itegration and fire it up", async () => {
+    it("should initialise integration and fire it up", async () => {
       const spy = jest.spyOn(RoonNuimoMapping.prototype, "up");
+
       const broker = new Broker(new BrokerConfig());
       const brokerSpy = jest.spyOn(broker, "connect");
       brokerSpy.mockImplementation(() => new Promise((x, _y) => x(undefined)));
@@ -31,6 +32,7 @@ describe("Integration", () => {
         },
         broker,
       );
+      i.down = jest.fn();
 
       await i.up().then(async (_t) => {
         expect(RoonNuimoMapping).toHaveBeenCalledTimes(1);
@@ -94,16 +96,11 @@ describe("Integration", () => {
         broker,
       );
 
-      Integration.all = jest.fn().mockImplementation(() => [i, n, x]);
-
-      broker.connect = jest
-        .fn()
-        .mockImplementation(() => new Promise((x, _) => x("")));
-
-      await [i, n].map((x) => x.up());
+      Integration.all = () => [i, n, x];
 
       expect(await i.next()).toEqual(n);
       expect(await n.next()).toEqual(i);
+      expect(await x.next()).toEqual(x);
     });
   });
 });

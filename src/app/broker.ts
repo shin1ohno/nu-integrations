@@ -38,7 +38,11 @@ class Broker {
   }
 
   disconnect(): Promise<void> {
-    return this.client.end();
+    if (this.client) {
+      return this.client.end();
+    } else {
+      return new Promise((x, _) => x(undefined));
+    }
   }
 
   subscribe(topic): Observable<[string, Buffer]> {
@@ -53,7 +57,11 @@ class Broker {
   }
 
   unsubscribe(topic): Promise<void> {
-    return this.client.unsubscribe(topic);
+    if (this.client) {
+      return this.client.unsubscribe(topic);
+    } else {
+      return new Promise((x, _) => x(undefined));
+    }
   }
 
   publish(topic, payload): Promise<void> {

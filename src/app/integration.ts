@@ -22,6 +22,7 @@ class Integration {
     this.options = options;
     this.broker = broker;
     this.mapping = this.routeMapping();
+    this.mapping.integration = this;
   }
 
   static all(): Integration[] {
@@ -77,28 +78,23 @@ class Integration {
   }
 
   down(): Promise<void> {
-    return this.mapping.down();
+    return this.mapping
+      .down()
+      .then((_) => this.broker.disconnect())
+      .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`));
   }
 
   next(): Integration {
-    const controlled = Integration.all()
+    const controlled: Integration[] = Integration.all()
       .filter((i) => i.options.controller.name === this.options.controller.name)
       .filter((i) => i.options.controller.id === this.options.controller.id);
     const n = controlled.indexOf(this);
 
     if (controlled.length === n + 1) {
-      const i = controlled.at(0);
-      return i as Integration;
+      return controlled.at(0);
     } else {
-      const i = controlled.at(n + 1);
-      return i as Integration;
+      return controlled.at(n + 1);
     }
-  }
-
-  switchToNext(): Promise<Integration> {
-    this.down();
-    const m = this.next();
-    return m.up();
   }
 
   private routeMapping(): MappingInterface {
