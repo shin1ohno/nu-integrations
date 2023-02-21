@@ -92,7 +92,7 @@ export class RoonNuimoMapping implements MappingInterface {
       filter((c) => typeof c !== "undefined"),
       tap((command) => {
         if (command === "switchApp") {
-            logger.info(`Switching from :${this.desc}`)
+          logger.info(`Switching from :${this.desc}`);
         } else {
           this.command(command);
         }

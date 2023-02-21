@@ -45,7 +45,15 @@ class Broker {
     }
   }
 
-  subscribe(topic): Observable<[string, Buffer]> {
+  connected(): boolean {
+    if (this.client) {
+      return this.client.connected;
+    } else {
+      return false;
+    }
+  }
+
+  subscribe(topic: string | string[]): Observable<[string, Buffer]> {
     if (this.client) {
       this.client.subscribe(topic);
     } else {
@@ -56,7 +64,7 @@ class Broker {
     return this.on("message");
   }
 
-  unsubscribe(topic): Promise<void> {
+  unsubscribe(topic: string | string[]): Promise<void> {
     if (this.client) {
       return this.client.unsubscribe(topic);
     } else {
@@ -64,8 +72,12 @@ class Broker {
     }
   }
 
-  publish(topic, payload): Promise<void> {
-    return this.client.publish(topic, payload);
+  publish(topic: string, payload: string): Promise<void> {
+    if (this.client) {
+      return this.client.publish(topic, payload);
+    } else {
+      return new Promise((x, _) => x(undefined));
+    }
   }
 
   private on(event): Observable<[string, Buffer]> {

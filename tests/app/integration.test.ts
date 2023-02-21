@@ -17,9 +17,11 @@ describe("Integration", () => {
       const broker = new Broker(new BrokerConfig());
       const brokerSpy = jest.spyOn(broker, "connect");
       brokerSpy.mockImplementation(() => new Promise((x, _y) => x(undefined)));
+      broker["on"] = jest.fn();
 
       const i = new Integration(
         {
+          id: 1,
           app: {
             name: "roon",
             zone: "Qutest (BNC)",
@@ -33,6 +35,7 @@ describe("Integration", () => {
         broker,
       );
       i.down = jest.fn();
+      i["observeKillSwitch"] = jest.fn();
 
       await i.up().then(async (_t) => {
         expect(RoonNuimoMapping).toHaveBeenCalledTimes(1);
@@ -42,7 +45,7 @@ describe("Integration", () => {
           output: "Qutest (BNC)",
           broker: broker,
         });
-        expect(brokerSpy).toHaveBeenCalledTimes(1);
+        expect(brokerSpy).toHaveBeenCalledTimes(2);
         expect(spy).toHaveBeenCalledTimes(1);
       });
     });
@@ -53,6 +56,7 @@ describe("Integration", () => {
       const broker = new Broker(new BrokerConfig());
       const i = new Integration(
         {
+          id: 1,
           app: {
             name: "roon",
             zone: "roonI",
@@ -68,6 +72,7 @@ describe("Integration", () => {
 
       const n = new Integration(
         {
+          id: 1,
           app: {
             name: "roon",
             zone: "roonN",
@@ -83,6 +88,7 @@ describe("Integration", () => {
 
       const x = new Integration(
         {
+          id: 2,
           app: {
             name: "roon",
             zone: "roonN",
