@@ -26,6 +26,6 @@
     "noImplicitThis": false,
     "strictNullChecks": false
   },
-  "exclude": ["node_modules", "tests/**/*.ts", "dist"],
-  "include": ["src/**/*.ts"]
+  "exclude": ["node_modules", "tests/**/*.ts", "dist/**/*.js"],
+  "include": ["src/**/*.ts", "dist/**/*.d.ts"]
 }
