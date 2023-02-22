@@ -29,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: volta-cli/action@v3
+      - run: npm ci --no-audit
       - run: npm run build:release --if-present
       - run: |
           chmod +x ./dist/index.js
