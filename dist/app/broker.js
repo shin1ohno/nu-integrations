@@ -30,6 +30,14 @@ class Broker {
             return new Promise((x, _) => x(undefined));
         }
     }
+    connected() {
+        if (this.client) {
+            return this.client.connected;
+        }
+        else {
+            return false;
+        }
+    }
     subscribe(topic) {
         if (this.client) {
             this.client.subscribe(topic);
@@ -48,7 +56,12 @@ class Broker {
         }
     }
     publish(topic, payload) {
-        return this.client.publish(topic, payload);
+        if (this.client) {
+            return this.client.publish(topic, payload);
+        }
+        else {
+            return new Promise((x, _) => x(undefined));
+        }
     }
     on(event) {
         return Rx.fromEvent(this.client, event);
