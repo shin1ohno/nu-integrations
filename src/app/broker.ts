@@ -40,11 +40,13 @@ class Broker {
     });
   }
 
-  disconnect(): Promise<void> {
+  async disconnect(): Promise<void> {
     if (this.client && !this.client.disconnecting) {
-      return this.client.end();
+      const e = await this.client.end(true);
+      this.client = undefined;
+      return e;
     } else {
-      return new Promise((x, _) => x(undefined));
+      return await new Promise((x, _) => x(undefined));
     }
   }
 

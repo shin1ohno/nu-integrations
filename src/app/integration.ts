@@ -4,18 +4,16 @@ import { RoonNuimoMapping } from "./mappings/roonNuimoMapping.js";
 import { MappingInterface } from "./mappings/interface.js";
 import { NullMapping } from "./mappings/null.js";
 import {
-  catchError,
   filter,
   map,
   Observable,
-  pipe,
   Subscription,
-  take,
+  take, tap
 } from "rxjs";
 import { logger } from "./utils.js";
 import IntegrationStore, {
   OWNER,
-  Result,
+  Result
 } from "./dataStores/integrationStore.js";
 
 declare type nuimoOptions = { name: "nuimo"; id: string };
@@ -56,7 +54,7 @@ class Integration {
       controller: attr.controller,
       updatedAt: attr.updatedAt,
       ownerUUID: attr.ownerUUID,
-      status: attr.status,
+      status: attr.status
     };
   }
 
@@ -79,13 +77,13 @@ class Integration {
   static find(uuid: string, ownerUUID: string = OWNER): Promise<Integration> {
     return IntegrationStore.find({
       integrationUUID: uuid,
-      ownerUUID: ownerUUID,
+      ownerUUID: ownerUUID
     }).then(
       (attr) =>
         new Integration(
           Integration.mutate(attr),
-          new Broker(this.getBrokerConfig()),
-        ),
+          new Broker(this.getBrokerConfig())
+        )
     );
   }
 
@@ -96,7 +94,7 @@ class Integration {
       .connect()
       .then((_) => this.mapping.up())
       .then((_) =>
-        this.observeKillSwitch(this.broker.subscribe(this.killTopic)),
+        this.observeKillSwitch(this.broker.subscribe(this.killTopic))
       )
       .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
       .then((_) => (this.status = "up"))
@@ -122,11 +120,10 @@ class Integration {
     return new Promise((resolve, reject) => {
       this.broker
         .connect()
-        // .then(_ => this.observeKillSwitch(this.broker.subscribe(this.killTopic)))
         .then((_) => {
           return this.broker.publish(
             this.killTopic,
-            JSON.stringify({ all: true }),
+            JSON.stringify({ all: true })
           );
         })
         .then((_) => resolve(this.broker))
@@ -135,7 +132,7 @@ class Integration {
   }
 
   private observeKillSwitch(
-    observable: Observable<[string, Buffer]>,
+    observable: Observable<[string, Buffer]>
   ): Subscription {
     return observable
       .pipe(
@@ -143,17 +140,10 @@ class Integration {
         filter(([topic, _]) => topic === this.killTopic),
         map(([_, payload]) => JSON.parse(payload.toString())),
         filter((payload) => payload.all),
-        // tap((_) => this.down()),
-        pipe(
-          catchError((e, x) => {
-            logger.error(`observeKill: ${e}`);
-            return x;
-          }),
-          take(5),
-        ),
+        tap((_) => this.down()),
       )
       .subscribe((_) => {
-        this.down();
+
         logger.info(`Kill switch detected. Executing down procedure.`);
       });
   }
@@ -166,7 +156,7 @@ class Integration {
     return Integration.all().then((all) => {
       const controlled = all
         .filter(
-          (i) => i.options.controller.name === this.options.controller.name,
+          (i) => i.options.controller.name === this.options.controller.name
         )
         .filter((i) => i.options.controller.id === this.options.controller.id);
       const n = controlled.indexOf(this);
@@ -186,7 +176,7 @@ class Integration {
           nuimo: this.options.controller.id,
           zone: this.options.app.zone,
           output: this.options.app.output,
-          broker: this.broker,
+          broker: this.broker
         });
       default:
         return new NullMapping();
@@ -200,7 +190,7 @@ class Integration {
       integrationUUID: this.uuid,
       status: this.status,
       app: this.options.app,
-      controller: this.options.controller,
+      controller: this.options.controller
     };
   }
 }
