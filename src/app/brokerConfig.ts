@@ -5,7 +5,7 @@ import { IClientOptions } from "async-mqtt";
 class BrokerConfig {
   readonly userName: string | undefined;
   readonly password: string | undefined;
-  private defaultURL = "mqtt://localhost:1833";
+  private defaultURL = "mqtt://localhost:1883";
   private readonly brokerURL: string | undefined;
 
   constructor(brokerURL?: string, userName?: string, password?: string) {

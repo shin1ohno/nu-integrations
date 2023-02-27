@@ -1,2 +1,3 @@
 /**/*.js
 tests/**/*.ts
+dist/**/*.ts

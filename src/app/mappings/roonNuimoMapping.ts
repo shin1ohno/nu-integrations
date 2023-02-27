@@ -31,7 +31,7 @@ export class RoonNuimoMapping implements MappingInterface {
     output: string;
     broker: Broker;
   }) {
-    this.desc = `Nuimo(${options.nuimo}) <-> Roon(${options.zone}-${options.output}) <=> ${options.broker.desc})`;
+    this.desc = `Roon(${options.zone}-${options.output}) <-> Nuimo(${options.nuimo}) <=> ${options.broker.desc})`;
     this.operationTopic = `nuimo/${options.nuimo}/operation`;
     this.commandTopic = `roon/${options.zone}/command`;
     this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
@@ -49,11 +49,11 @@ export class RoonNuimoMapping implements MappingInterface {
   up(): Subscription {
     return this.observe(
       this.broker.subscribe(this.topicsToSubscribe),
-    ).subscribe((x) => logger.info(x));
+    ).subscribe();
   }
 
-  down(): Promise<void> {
-    return this.broker.unsubscribe(this.topicsToSubscribe);
+  async down(): Promise<void> {
+    return await this.broker.unsubscribe(this.topicsToSubscribe);
   }
 
   private observe = (

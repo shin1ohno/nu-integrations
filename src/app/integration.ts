@@ -3,114 +3,135 @@ import { BrokerConfig } from "./brokerConfig.js";
 import { RoonNuimoMapping } from "./mappings/roonNuimoMapping.js";
 import { MappingInterface } from "./mappings/interface.js";
 import { NullMapping } from "./mappings/null.js";
-import { filter, map, Observable, Subscription, tap } from "rxjs";
+import {
+  catchError,
+  filter,
+  map,
+  Observable,
+  pipe,
+  Subscription,
+  take,
+} from "rxjs";
 import { logger } from "./utils.js";
+import IntegrationStore, {
+  OWNER,
+  Result,
+} from "./dataStores/integrationStore.js";
 
 declare type nuimoOptions = { name: "nuimo"; id: string };
 declare type roonOptions = { name: "roon"; zone: string; output: string };
 declare type IntegrationOptions = {
-  id: number;
+  uuid: string;
   app: roonOptions;
   controller: nuimoOptions;
+  updatedAt?: number;
+  ownerUUID?: string;
+  status: "up" | "down";
 };
 
 class Integration {
+  readonly uuid: string;
   private readonly options: IntegrationOptions;
   private readonly broker: Broker;
   private readonly mapping: MappingInterface;
   private status: "up" | "down";
   private readonly killTopic: string;
+  private readonly ownerUUID: string;
 
   constructor(options: IntegrationOptions, broker: Broker) {
     this.options = options;
     this.broker = broker;
-    this.killTopic = `nuIntegrations/${this.options.id}/kill`;
+    this.uuid = options.uuid;
+    this.ownerUUID = options.ownerUUID;
+    this.killTopic = `nuIntegrations/${this.options.uuid}/kill`;
     this.mapping = this.routeMapping();
     this.mapping.integration = this;
+    this.status = options.status;
   }
 
-  static all(): Integration[] {
-    return [
-      {
-        id: 1,
-        app: {
-          name: "roon",
-          zone: "Bathys",
-          output: "Bathys",
-        },
-        controller: {
-          name: "nuimo",
-          id: "fd6fcaa92b28",
-        },
-      },
-      {
-        id: 2,
-        app: {
-          name: "roon",
-          zone: "Qutest",
-          output: "Qutest",
-        },
-        controller: {
-          name: "nuimo",
-          id: "e39f52d6ecb8",
-        },
-      },
-      {
-        id: 3,
-        app: {
-          name: "roon",
-          zone: "Qutest",
-          output: "Qutest",
-        },
-        controller: {
-          name: "nuimo",
-          id: "c24d4dce93b159c147a916d714a32ce9",
-        },
-      },
-      {
-        id: 4,
-        app: {
-          name: "roon",
-          zone: "Qutest (BNC)",
-          output: "Qutest (BNC)",
-        },
-        controller: {
-          name: "nuimo",
-          id: "c381df4eff6a",
-        },
-      },
-    ].map(
-      (c: IntegrationOptions) =>
+  static mutate(attr): IntegrationOptions {
+    return {
+      uuid: attr.integrationUUID,
+      app: attr.app,
+      controller: attr.controller,
+      updatedAt: attr.updatedAt,
+      ownerUUID: attr.ownerUUID,
+      status: attr.status,
+    };
+  }
+
+  static all(ownerUUID: string = OWNER): Promise<Integration[]> {
+    return IntegrationStore.findAllForOwner(ownerUUID).then((attrs) => {
+      return attrs
+        .map((attr) => Integration.mutate(attr))
+        .map((c) => new Integration(c, new Broker(this.getBrokerConfig())));
+    });
+  }
+
+  private static getBrokerConfig(): BrokerConfig {
+    if (process.env.NODE_ENV === "test") {
+      return new BrokerConfig();
+    }
+
+    return new BrokerConfig("mqtt://mqbroker.home.local:1883");
+  }
+
+  static find(uuid: string, ownerUUID: string = OWNER): Promise<Integration> {
+    return IntegrationStore.find({
+      integrationUUID: uuid,
+      ownerUUID: ownerUUID,
+    }).then(
+      (attr) =>
         new Integration(
-          c,
-          new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883")),
+          Integration.mutate(attr),
+          new Broker(this.getBrokerConfig()),
         ),
     );
   }
 
   up(): Promise<Integration> {
-    return this.pushKillMessage()
-      .then((b) => b.connect())
-      .then((_): Subscription => this.mapping.up())
+    // return this.pushKillMessage()
+    //   .then((b) => b.connect())
+    return this.broker
+      .connect()
+      .then((_) => this.mapping.up())
       .then((_) =>
         this.observeKillSwitch(this.broker.subscribe(this.killTopic)),
       )
       .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
       .then((_) => (this.status = "up"))
+      .then((_) => this.updateDataSource())
       .then((): Integration => this);
   }
 
-  pushKillMessage(): Promise<Broker> {
-    return this.broker
-      .connect()
-      .then((_) => {
-        return this.broker.publish(
-          this.killTopic,
-          JSON.stringify({ all: true }),
-        );
-      })
+  async down(): Promise<void> {
+    return this.mapping
+      .down()
       .then((_) => this.broker.disconnect())
-      .then((_) => this.broker);
+      .then((_) => (this.status = "down"))
+      .then((_) => this.updateDataSource())
+      .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`))
+      .catch((e) => logger.error(`Integration down: ${e}`));
+  }
+
+  private updateDataSource(): void {
+    IntegrationStore.update(this.mutate());
+  }
+
+  async pushKillMessage(): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      this.broker
+        .connect()
+        // .then(_ => this.observeKillSwitch(this.broker.subscribe(this.killTopic)))
+        .then((_) => {
+          return this.broker.publish(
+            this.killTopic,
+            JSON.stringify({ all: true }),
+          );
+        })
+        .then((_) => resolve(this.broker))
+        .catch((e) => reject(e));
+    });
   }
 
   private observeKillSwitch(
@@ -118,39 +139,44 @@ class Integration {
   ): Subscription {
     return observable
       .pipe(
+        take(1),
         filter(([topic, _]) => topic === this.killTopic),
         map(([_, payload]) => JSON.parse(payload.toString())),
         filter((payload) => payload.all),
-        tap((_) => this.down()),
+        // tap((_) => this.down()),
+        pipe(
+          catchError((e, x) => {
+            logger.error(`observeKill: ${e}`);
+            return x;
+          }),
+          take(5),
+        ),
       )
-      .subscribe((_) =>
-        logger.info(`Kill switch detected. Executing down procedure.`),
-      );
-  }
-
-  down(): Promise<void> {
-    return this.mapping
-      .down()
-      .then((_) => this.broker.disconnect())
-      .then((_) => (this.status = "down"))
-      .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`));
+      .subscribe((_) => {
+        this.down();
+        logger.info(`Kill switch detected. Executing down procedure.`);
+      });
   }
 
   awaken(): boolean {
     return this.status === "up";
   }
 
-  next(): Integration {
-    const controlled: Integration[] = Integration.all()
-      .filter((i) => i.options.controller.name === this.options.controller.name)
-      .filter((i) => i.options.controller.id === this.options.controller.id);
-    const n = controlled.indexOf(this);
+  next(): Promise<Integration> {
+    return Integration.all().then((all) => {
+      const controlled = all
+        .filter(
+          (i) => i.options.controller.name === this.options.controller.name,
+        )
+        .filter((i) => i.options.controller.id === this.options.controller.id);
+      const n = controlled.indexOf(this);
 
-    if (controlled.length === n + 1) {
-      return controlled.at(0);
-    } else {
-      return controlled.at(n + 1);
-    }
+      if (controlled.length === n + 1) {
+        return controlled.at(0) as Integration;
+      } else {
+        return controlled.at(n + 1) as Integration;
+      }
+    });
   }
 
   private routeMapping(): MappingInterface {
@@ -166,6 +192,17 @@ class Integration {
         return new NullMapping();
     }
   }
+
+  private mutate(): Result {
+    return {
+      ownerUUID: this.ownerUUID,
+      updatedAt: Date.now() / 1000, //TODO
+      integrationUUID: this.uuid,
+      status: this.status,
+      app: this.options.app,
+      controller: this.options.controller,
+    };
+  }
 }
 
-export { Integration };
+export { Integration, roonOptions, nuimoOptions };

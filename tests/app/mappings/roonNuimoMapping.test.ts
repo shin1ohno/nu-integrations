@@ -4,6 +4,10 @@ import { BrokerConfig } from "app/brokerConfig";
 import { of } from "rxjs";
 
 describe("RoonNuimoIntegration", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   it("has the right routing", async () => {
     const b = new Broker(new BrokerConfig());
     const i = new RoonNuimoMapping({
@@ -13,10 +17,7 @@ describe("RoonNuimoIntegration", () => {
       broker: b,
     });
 
-    b.publish = jest.fn();
-    b.unsubscribe = jest
-      .fn()
-      .mockImplementation(() => new Promise((x, _y) => x(undefined)));
+    jest.spyOn(b, "publish");
 
     const observation = i["observe"];
 
@@ -78,10 +79,7 @@ describe("RoonNuimoIntegration", () => {
       broker: b,
     });
 
-    b.publish = jest.fn();
-    b.unsubscribe = jest
-      .fn()
-      .mockImplementation(() => new Promise((x, _y) => x(undefined)));
+    jest.spyOn(b, "publish");
 
     const observation = i["observe"];
 
@@ -103,9 +101,7 @@ describe("RoonNuimoIntegration", () => {
       broker: b,
     });
 
-    b.unsubscribe = jest
-      .fn()
-      .mockImplementation(() => new Promise((x, _y) => x(undefined)));
+    jest.spyOn(b, "unsubscribe");
 
     await i.down().then(() => {
       expect(b.unsubscribe).toHaveBeenCalledWith([

@@ -4,6 +4,9 @@
   "description": "",
   "main": "./dist/app/index.js",
   "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    },
     "./*": {
       "import": [
         "./dist/app/*.js",
@@ -36,7 +39,9 @@
     "dotenv": "^16.0.1",
     "pino": "^7.3.0",
     "rxjs": "^7.4.0",
-    "tslib": "~2.4"
+    "tslib": "~2.4",
+    "@hexlabs/dynamo-ts": "^3.0.142",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/jest": "~29.2",
