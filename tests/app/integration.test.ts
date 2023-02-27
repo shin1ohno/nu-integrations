@@ -13,7 +13,6 @@ describe("Integration", () => {
     it("should initialise integration and fire it up", async () => {
       const broker = new Broker(new BrokerConfig());
       const brokerSpy = jest.spyOn(broker, "subscribe");
-      // const disconnectSpy = jest.spyOn(broker, "disconnect");
 
       IntegrationStore.update = jest.fn();
 
@@ -67,7 +66,6 @@ describe("Integration", () => {
 
       await new Promise((r) => {
         setTimeout(() => {
-          // expect(disconnectSpy).toHaveBeenCalledTimes(2);
           expect(i1.awaken()).toBeFalsy();
           expect(i2.awaken()).toBeFalsy();
           r("");
