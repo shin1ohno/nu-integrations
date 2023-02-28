@@ -3,17 +3,11 @@ import { BrokerConfig } from "./brokerConfig.js";
 import { RoonNuimoMapping } from "./mappings/roonNuimoMapping.js";
 import { MappingInterface } from "./mappings/interface.js";
 import { NullMapping } from "./mappings/null.js";
-import {
-  filter,
-  map,
-  Observable,
-  Subscription,
-  take, tap
-} from "rxjs";
+import { filter, map, Observable, Subscription, tap } from "rxjs";
 import { logger } from "./utils.js";
 import IntegrationStore, {
   OWNER,
-  Result
+  Result,
 } from "./dataStores/integrationStore.js";
 
 declare type nuimoOptions = { name: "nuimo"; id: string };
@@ -54,7 +48,7 @@ class Integration {
       controller: attr.controller,
       updatedAt: attr.updatedAt,
       ownerUUID: attr.ownerUUID,
-      status: attr.status
+      status: attr.status,
     };
   }
 
@@ -77,13 +71,13 @@ class Integration {
   static find(uuid: string, ownerUUID: string = OWNER): Promise<Integration> {
     return IntegrationStore.find({
       integrationUUID: uuid,
-      ownerUUID: ownerUUID
+      ownerUUID: ownerUUID,
     }).then(
       (attr) =>
         new Integration(
           Integration.mutate(attr),
-          new Broker(this.getBrokerConfig())
-        )
+          new Broker(this.getBrokerConfig()),
+        ),
     );
   }
 
@@ -94,7 +88,7 @@ class Integration {
       .connect()
       .then((_) => this.mapping.up())
       .then((_) =>
-        this.observeKillSwitch(this.broker.subscribe(this.killTopic))
+        this.observeKillSwitch(this.broker.subscribe(this.killTopic)),
       )
       .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
       .then((_) => (this.status = "up"))
@@ -103,47 +97,43 @@ class Integration {
   }
 
   async down(): Promise<void> {
-    return this.mapping
-      .down()
-      .then((_) => this.broker.disconnect())
-      .then((_) => (this.status = "down"))
-      .then((_) => this.updateDataSource())
+    await this.mapping.down();
+    await this.broker.disconnect().then((_) => (this.status = "down"));
+
+    return this.updateDataSource()
       .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`))
       .catch((e) => logger.error(`Integration down: ${e}`));
   }
 
-  private updateDataSource(): void {
-    IntegrationStore.update(this.mutate());
+  private async updateDataSource(): Promise<unknown> {
+    return await IntegrationStore.update(this.mutate());
   }
 
   async pushKillMessage(): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      this.broker
-        .connect()
-        .then((_) => {
-          return this.broker.publish(
-            this.killTopic,
-            JSON.stringify({ all: true })
-          );
-        })
-        .then((_) => resolve(this.broker))
-        .catch((e) => reject(e));
+    const needsConnect = !this.awaken();
+    if (needsConnect) {
+      await this.broker.connect();
+      this.observeKillSwitch(this.broker.subscribe(this.killTopic));
+    }
+
+    return new Promise((resolve) => {
+      this.broker.publish(this.killTopic, JSON.stringify({ all: true }));
+
+      resolve(this.broker);
     });
   }
 
   private observeKillSwitch(
-    observable: Observable<[string, Buffer]>
+    observable: Observable<[string, Buffer]>,
   ): Subscription {
     return observable
       .pipe(
-        take(1),
         filter(([topic, _]) => topic === this.killTopic),
         map(([_, payload]) => JSON.parse(payload.toString())),
         filter((payload) => payload.all),
         tap((_) => this.down()),
       )
       .subscribe((_) => {
-
         logger.info(`Kill switch detected. Executing down procedure.`);
       });
   }
@@ -156,7 +146,7 @@ class Integration {
     return Integration.all().then((all) => {
       const controlled = all
         .filter(
-          (i) => i.options.controller.name === this.options.controller.name
+          (i) => i.options.controller.name === this.options.controller.name,
         )
         .filter((i) => i.options.controller.id === this.options.controller.id);
       const n = controlled.indexOf(this);
@@ -176,7 +166,7 @@ class Integration {
           nuimo: this.options.controller.id,
           zone: this.options.app.zone,
           output: this.options.app.output,
-          broker: this.broker
+          broker: this.broker,
         });
       default:
         return new NullMapping();
@@ -190,7 +180,7 @@ class Integration {
       integrationUUID: this.uuid,
       status: this.status,
       app: this.options.app,
-      controller: this.options.controller
+      controller: this.options.controller,
     };
   }
 }

@@ -1,7 +1,8 @@
 import { BrokerConfig } from "./brokerConfig.js";
-import MQTT, { AsyncMqttClient } from "async-mqtt";
+import { AsyncClient, AsyncMqttClient } from "async-mqtt";
 import { pino } from "pino";
 import { fromEvent, Observable } from "rxjs";
+import MQTT from "mqtt";
 
 const logger = pino();
 
@@ -16,35 +17,32 @@ class Broker {
   }
 
   connect(): Promise<Broker> {
-    return new Promise((resolve, reject) => {
-      MQTT.connectAsync(this.config.url, this.config.options)
-        .then((client) => {
-          client.on("end", () => {
-            this.client = undefined;
-            logger.info(
-              `Disconnected from MQTT Broker(${
-                this.config.url
-              }) at ${new Date().toISOString()}`,
-            );
-          });
+    return new Promise((resolve, _) => {
+      const c = MQTT.connect(this.config.url, this.config.options);
+      this.client = new AsyncClient(c);
 
-          logger.info(
-            `Connected to MQTT Broker(${
-              this.config.url
-            }) at ${new Date().toISOString()}`,
-          );
-          this.client = client;
-          resolve(this);
-        })
-        .catch((reason) => reject(reason));
+      this.client.on("end", () => {
+        logger.info(
+          `Disconnecting from MQTT Broker(${
+            this.config.url
+          }) at ${new Date().toISOString()}`,
+        );
+      });
+
+      this.client.on("connect", () => {
+        logger.info(
+          `Connected to MQTT Broker(${
+            this.config.url
+          }) at ${new Date().toISOString()}`,
+        );
+        resolve(this);
+      });
     });
   }
 
   async disconnect(): Promise<void> {
-    if (this.client && !this.client.disconnecting) {
-      const e = await this.client.end(true);
-      this.client = undefined;
-      return e;
+    if (this.connected()) {
+      return await this.client.end(true);
     } else {
       return await new Promise((x, _) => x(undefined));
     }

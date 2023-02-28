@@ -20,9 +20,9 @@ jobs:
       - uses: volta-cli/action@v3
       - uses: namoshek/mosquitto-github-action@v1
         with:
-          version: '1.6'
-          ports: '1883:1883'
-          container-name: 'mqtt'
+          version: "1.6"
+          ports: "1883:1883"
+          container-name: "mqtt"
       - run: npm ci --no-audit
       - run: npm run lint --if-present
       - run: npm test
