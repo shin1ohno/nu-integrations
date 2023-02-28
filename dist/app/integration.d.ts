@@ -9,24 +9,34 @@ declare type roonOptions = {
     output: string;
 };
 declare type IntegrationOptions = {
-    id: number;
+    uuid: string;
     app: roonOptions;
     controller: nuimoOptions;
+    updatedAt?: number;
+    ownerUUID?: string;
+    status: "up" | "down";
 };
 declare class Integration {
+    readonly uuid: string;
     private readonly options;
     private readonly broker;
     private readonly mapping;
     private status;
     private readonly killTopic;
+    private readonly ownerUUID;
     constructor(options: IntegrationOptions, broker: Broker);
-    static all(): Integration[];
+    static mutate(attr: any): IntegrationOptions;
+    static all(ownerUUID?: string): Promise<Integration[]>;
+    private static getBrokerConfig;
+    static find(uuid: string, ownerUUID?: string): Promise<Integration>;
     up(): Promise<Integration>;
-    pushKillMessage(): Promise<Broker>;
-    private observeKillSwitch;
     down(): Promise<void>;
+    private updateDataSource;
+    pushKillMessage(): Promise<unknown>;
+    private observeKillSwitch;
     awaken(): boolean;
-    next(): Integration;
+    next(): Promise<Integration>;
     private routeMapping;
+    private mutate;
 }
-export { Integration };
+export { Integration, roonOptions, nuimoOptions };

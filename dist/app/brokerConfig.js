@@ -3,7 +3,7 @@ import * as process from "process";
 class BrokerConfig {
     userName;
     password;
-    defaultURL = "mqtt://localhost:1833";
+    defaultURL = "mqtt://localhost:1883";
     brokerURL;
     constructor(brokerURL, userName, password) {
         this.brokerURL = brokerURL;

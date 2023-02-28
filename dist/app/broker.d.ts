@@ -7,7 +7,7 @@ declare class Broker {
     private readonly config;
     desc: string;
     constructor(config: BrokerConfig);
-    connect(): Promise<void>;
+    connect(): Promise<Broker>;
     disconnect(): Promise<void>;
     connected(): boolean;
     subscribe(topic: string | string[]): Observable<[string, Buffer]>;

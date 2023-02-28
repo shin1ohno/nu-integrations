@@ -12,7 +12,7 @@ export class RoonNuimoMapping {
     desc;
     integration;
     constructor(options) {
-        this.desc = `Nuimo(${options.nuimo}) <-> Roon(${options.zone}-${options.output}) <=> ${options.broker.desc})`;
+        this.desc = `Roon(${options.zone}-${options.output}) <-> Nuimo(${options.nuimo}) <=> ${options.broker.desc})`;
         this.operationTopic = `nuimo/${options.nuimo}/operation`;
         this.commandTopic = `roon/${options.zone}/command`;
         this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
@@ -27,10 +27,10 @@ export class RoonNuimoMapping {
         this.broker = options.broker;
     }
     up() {
-        return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe((x) => logger.info(x));
+        return this.observe(this.broker.subscribe(this.topicsToSubscribe)).subscribe();
     }
-    down() {
-        return this.broker.unsubscribe(this.topicsToSubscribe);
+    async down() {
+        return await this.broker.unsubscribe(this.topicsToSubscribe);
     }
     observe = (brokerEvents) => {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
