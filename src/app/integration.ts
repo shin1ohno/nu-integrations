@@ -11,7 +11,14 @@ import IntegrationStore, {
 } from "./dataStores/integrationStore.js";
 
 declare type nuimoOptions = { name: "nuimo"; id: string };
-declare type roonOptions = { name: "roon"; zone: string; output: string };
+declare type roonOptions = {
+  name: "roon";
+  zone: string;
+  output: string;
+  nowPlaying?: {
+    imageKey?: string;
+  };
+};
 declare type IntegrationOptions = {
   uuid: string;
   app: roonOptions;
@@ -105,8 +112,8 @@ class Integration {
       .catch((e) => logger.error(`Integration down: ${e}`));
   }
 
-  private async updateDataSource(): Promise<unknown> {
-    return await IntegrationStore.update(this.mutate());
+  async updateDataSource(newAppAttr?: Record<string, any>): Promise<unknown> {
+    return await IntegrationStore.update(this.mutate(newAppAttr));
   }
 
   async pushKillMessage(): Promise<unknown> {
@@ -117,9 +124,9 @@ class Integration {
     }
 
     return new Promise((resolve) => {
-      this.broker.publish(this.killTopic, JSON.stringify({ all: true }));
-
-      resolve(this.broker);
+      this.broker
+        .publish(this.killTopic, JSON.stringify({ all: true }))
+        .then(() => resolve(this.broker));
     });
   }
 
@@ -173,13 +180,13 @@ class Integration {
     }
   }
 
-  private mutate(): Result {
+  private mutate(newAppAttr?: Record<string, any>): Result {
     return {
       ownerUUID: this.ownerUUID,
       updatedAt: Date.now() / 1000, //TODO
       integrationUUID: this.uuid,
       status: this.status,
-      app: this.options.app,
+      app: Object.assign(this.options.app, newAppAttr),
       controller: this.options.controller,
     };
   }

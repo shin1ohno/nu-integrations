@@ -60,7 +60,11 @@ export default class IntegrationStore {
           ownerUUID: attr.ownerUUID,
           integrationUUID: attr.integrationUUID,
         },
-        updates: { updatedAt: attr.updatedAt, status: attr.status },
+        updates: {
+          updatedAt: attr.updatedAt,
+          status: attr.status,
+          app: attr.app,
+        },
       })
       .then((res) => res.item);
   }

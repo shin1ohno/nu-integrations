@@ -1,8 +1,7 @@
 import { Integration } from "app/integration";
 import { BrokerConfig } from "app/brokerConfig";
 import { Broker } from "app/broker";
-// import { RoonNuimoMapping } from "app/mappings/roonNuimoMapping";
-import IntegrationStore from "../../src/app/dataStores/integrationStore";
+import IntegrationStore from "app/dataStores/integrationStore";
 
 describe("Integration", () => {
   beforeEach(() => {
@@ -73,6 +72,7 @@ describe("Integration", () => {
           "nuimo/c381df4eff6a/operation",
           "roon/Qutest (BNC)1/state",
           "roon/Qutest (BNC)1/outputs/Qutest (BNC)1/volume/percent",
+          "roon/Qutest (BNC)1/now_playing/#",
         ]);
         expect(brokerSpy).toHaveBeenNthCalledWith(2, "nuIntegrations/1/kill");
       });

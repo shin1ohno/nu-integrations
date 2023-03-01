@@ -29,6 +29,11 @@ class Broker {
         );
       });
 
+      this.client.on("error", (e) => {
+        logger.error(`Error from MQTT Client(${this.config.url}):`);
+        logger.error(e);
+      });
+
       this.client.on("connect", () => {
         logger.info(
           `Connected to MQTT Broker(${
@@ -42,7 +47,7 @@ class Broker {
 
   async disconnect(): Promise<void> {
     if (this.connected()) {
-      return await this.client.end(true);
+      return await this.client.end();
     } else {
       return await new Promise((x, _) => x(undefined));
     }

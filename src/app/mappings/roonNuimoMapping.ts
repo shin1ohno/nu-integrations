@@ -24,6 +24,8 @@ export class RoonNuimoMapping implements MappingInterface {
   private readonly nuimoReactionTopic: string;
   public readonly desc: string;
   public integration: Integration;
+  private readonly nowPlayingTopic: string;
+  private readonly nowPlayingImageKeyTopic: string;
 
   constructor(options: {
     nuimo: string;
@@ -37,10 +39,13 @@ export class RoonNuimoMapping implements MappingInterface {
     this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
     this.roonStateTopic = `roon/${options.zone}/state`;
     this.roonVolumeTopic = `roon/${options.zone}/outputs/${options.output}/volume/percent`;
+    this.nowPlayingTopic = `roon/${options.zone}/now_playing/#`;
+    this.nowPlayingImageKeyTopic = `roon/${options.zone}/now_playing/image_key`;
     this.topicsToSubscribe = [
       this.operationTopic,
       this.roonStateTopic,
       this.roonVolumeTopic,
+      this.nowPlayingTopic,
     ];
     this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
     this.broker = options.broker;
@@ -65,12 +70,31 @@ export class RoonNuimoMapping implements MappingInterface {
     );
 
     return of(
+      this.observeRoonNowPlaying(reactionObservable),
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
       this.observeNuimoRotate(operationObservable),
       this.observeNuimoCommand(operationObservable),
     ).pipe(mergeAll());
   };
+
+  private observeRoonNowPlaying(
+    operationObservable: Observable<[string, Buffer]>,
+  ): Observable<string> {
+    return operationObservable.pipe(
+      filter(([topic, _]) => topic === this.nowPlayingImageKeyTopic),
+      map(([_, payload]): string => payload.toString()),
+      map((imageId) => {
+        return {
+          nowPlaying: {
+            imageKey: imageId,
+          },
+        };
+      }),
+      tap((newAttr) => this.integration.updateDataSource(newAttr)),
+      map((obj) => JSON.stringify(obj)),
+    );
+  }
 
   private observeNuimoCommand(
     operationObservable: Observable<[string, Buffer]>,

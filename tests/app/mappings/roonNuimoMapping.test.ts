@@ -108,6 +108,7 @@ describe("RoonNuimoIntegration", () => {
         "nuimo/xxx/operation",
         "roon/yyy/state",
         "roon/yyy/outputs/zzz/volume/percent",
+        "roon/yyy/now_playing/#",
       ]);
     });
   });
