@@ -11,6 +11,8 @@ export class RoonNuimoMapping {
     nuimoReactionTopic;
     desc;
     integration;
+    nowPlayingTopic;
+    nowPlayingImageKeyTopic;
     constructor(options) {
         this.desc = `Roon(${options.zone}-${options.output}) <-> Nuimo(${options.nuimo}) <=> ${options.broker.desc})`;
         this.operationTopic = `nuimo/${options.nuimo}/operation`;
@@ -18,10 +20,13 @@ export class RoonNuimoMapping {
         this.volumeSetTopic = `roon/${options.zone}/outputs/${options.output}/volume/set/relative`;
         this.roonStateTopic = `roon/${options.zone}/state`;
         this.roonVolumeTopic = `roon/${options.zone}/outputs/${options.output}/volume/percent`;
+        this.nowPlayingTopic = `roon/${options.zone}/now_playing/#`;
+        this.nowPlayingImageKeyTopic = `roon/${options.zone}/now_playing/image_key`;
         this.topicsToSubscribe = [
             this.operationTopic,
             this.roonStateTopic,
             this.roonVolumeTopic,
+            this.nowPlayingTopic,
         ];
         this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
         this.broker = options.broker;
@@ -34,8 +39,17 @@ export class RoonNuimoMapping {
     }
     observe = (brokerEvents) => {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
-        return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
+        return of(this.observeRoonNowPlaying(reactionObservable), this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
     };
+    observeRoonNowPlaying(operationObservable) {
+        return operationObservable.pipe(filter(([topic, _]) => topic === this.nowPlayingImageKeyTopic), map(([_, payload]) => payload.toString()), map((imageId) => {
+            return {
+                nowPlaying: {
+                    imageKey: imageId,
+                },
+            };
+        }), tap((newAttr) => this.integration.updateDataSource(newAttr)), map((obj) => JSON.stringify(obj)));
+    }
     observeNuimoCommand(operationObservable) {
         const mapping = {
             select: "playpause",

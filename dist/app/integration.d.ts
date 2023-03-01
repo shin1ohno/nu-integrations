@@ -7,6 +7,9 @@ declare type roonOptions = {
     name: "roon";
     zone: string;
     output: string;
+    nowPlaying?: {
+        imageKey?: string;
+    };
 };
 declare type IntegrationOptions = {
     uuid: string;
@@ -31,7 +34,7 @@ declare class Integration {
     static find(uuid: string, ownerUUID?: string): Promise<Integration>;
     up(): Promise<Integration>;
     down(): Promise<void>;
-    private updateDataSource;
+    updateDataSource(newAppAttr?: Record<string, any>): Promise<unknown>;
     pushKillMessage(): Promise<unknown>;
     private observeKillSwitch;
     awaken(): boolean;

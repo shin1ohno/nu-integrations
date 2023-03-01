@@ -69,8 +69,8 @@ class Integration {
             .then((_) => logger.info(`Integration down: ${this.mapping.desc}`))
             .catch((e) => logger.error(`Integration down: ${e}`));
     }
-    async updateDataSource() {
-        return await IntegrationStore.update(this.mutate());
+    async updateDataSource(newAppAttr) {
+        return await IntegrationStore.update(this.mutate(newAppAttr));
     }
     async pushKillMessage() {
         const needsConnect = !this.awaken();
@@ -79,8 +79,9 @@ class Integration {
             this.observeKillSwitch(this.broker.subscribe(this.killTopic));
         }
         return new Promise((resolve) => {
-            this.broker.publish(this.killTopic, JSON.stringify({ all: true }));
-            resolve(this.broker);
+            this.broker
+                .publish(this.killTopic, JSON.stringify({ all: true }))
+                .then(() => resolve(this.broker));
         });
     }
     observeKillSwitch(observable) {
@@ -120,13 +121,13 @@ class Integration {
                 return new NullMapping();
         }
     }
-    mutate() {
+    mutate(newAppAttr) {
         return {
             ownerUUID: this.ownerUUID,
             updatedAt: Date.now() / 1000,
             integrationUUID: this.uuid,
             status: this.status,
-            app: this.options.app,
+            app: Object.assign(this.options.app, newAppAttr),
             controller: this.options.controller,
         };
     }

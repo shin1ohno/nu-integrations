@@ -13,6 +13,8 @@ export declare class RoonNuimoMapping implements MappingInterface {
     private readonly nuimoReactionTopic;
     readonly desc: string;
     integration: Integration;
+    private readonly nowPlayingTopic;
+    private readonly nowPlayingImageKeyTopic;
     constructor(options: {
         nuimo: string;
         zone: string;
@@ -22,6 +24,7 @@ export declare class RoonNuimoMapping implements MappingInterface {
     up(): Subscription;
     down(): Promise<void>;
     private observe;
+    private observeRoonNowPlaying;
     private observeNuimoCommand;
     private observeNuimoRotate;
     private observeRoonVolume;
