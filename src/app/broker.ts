@@ -8,6 +8,7 @@ import MQTT from "mqtt";
 const logger = pino();
 
 class Broker {
+  // eslint-disable-next-line
   //@ts-ignore
   public client?: AsyncClient;
   private readonly config: BrokerConfig;

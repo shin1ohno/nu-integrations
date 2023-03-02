@@ -75,15 +75,15 @@ class Integration {
   }
 
   up(): Promise<Integration> {
-    return (
-      this.broker
-        .connect()
-        .then((_) => this.mapping.up())
-        .then((_) => this.observeKillSwitch(this.broker.subscribe(this.killTopic)))
-        .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
-        .then((_) => (this.status = "up"))
-        .then((): Integration => this)
-    );
+    return this.broker
+      .connect()
+      .then((_) => this.mapping.up())
+      .then((_) =>
+        this.observeKillSwitch(this.broker.subscribe(this.killTopic)),
+      )
+      .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
+      .then((_) => (this.status = "up"))
+      .then((): Integration => this);
   }
 
   private async down(): Promise<void> {

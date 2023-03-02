@@ -13,18 +13,18 @@ new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883"))
   .then((b) => {
     const observable = b.subscribe([
       "roon/+/now_playing/image_key",
-      "nuIntegrations/+/touch"
+      "nuIntegrations/+/touch",
     ]);
     of(
       observable.pipe(
         filter(
           ([topic, _]) =>
-            !!topic.match(/^roon\/(.+)\/now_playing\/image_key$/gmu)
+            !!topic.match(/^roon\/(.+)\/now_playing\/image_key$/gmu),
         ),
         map(([topic, payload]) => {
           return {
             zone: topic.split("/")[1],
-            imageKey: payload.toString()
+            imageKey: payload.toString(),
           };
         }),
         tap((update) => {
@@ -34,37 +34,41 @@ new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883"))
               .forEach((i) =>
                 i.updateDataSource({
                   nowPlaying: {
-                    imageKey: update.imageKey
-                  }
-                })
+                    imageKey: update.imageKey,
+                  },
+                }),
               );
           });
-        })
+        }),
       ),
       observable.pipe(
         filter(
-          ([topic, _]) => !!topic.match(/^nuIntegrations\/(.+)\/touch$/gmu)
+          ([topic, _]) => !!topic.match(/^nuIntegrations\/(.+)\/touch$/gmu),
         ),
         throttleTime(200),
         map(([topic, _]) => topic.split("/")[1]),
         tap((integrationUUID) => {
-          b.publish(`nuIntegrations/${integrationUUID}/kill`, JSON.stringify({ all: true })).then(() => {
+          b.publish(
+            `nuIntegrations/${integrationUUID}/kill`,
+            JSON.stringify({ all: true }),
+          ).then(() => {
             Integration.find(integrationUUID).then((i) => {
               if (i.status === "up") i.up();
             });
           });
-        })
-      )
-    ).pipe(mergeAll()).subscribe();
+        }),
+      ),
+    )
+      .pipe(mergeAll())
+      .subscribe();
     return b;
   })
-  .then((b) => {
-      Integration.all().then((all) =>
-        all.forEach((i) => {
-          if (i.status === "up") i.up()
-        })
-      );
-    }
-  );
+  .then((_) => {
+    Integration.all().then((all) =>
+      all.forEach((i) => {
+        if (i.status === "up") i.up();
+      }),
+    );
+  });
 
 export { Integration };
