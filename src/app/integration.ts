@@ -1,7 +1,11 @@
 import { Broker } from "./broker.js";
 import { BrokerConfig } from "./brokerConfig.js";
 import { RoonNuimoMapping } from "./mappings/roonNuimoMapping.js";
-import { MappingInterface } from "./mappings/interface.js";
+import {
+  IntegrationOptions,
+  MappingInterface,
+  newAppAttrs,
+} from "./mappings/interface.js";
 import { NullMapping } from "./mappings/null.js";
 import { filter, map, Observable, Subscription, tap } from "rxjs";
 import { logger } from "./utils.js";
@@ -10,30 +14,12 @@ import IntegrationStore, {
   Result,
 } from "./dataStores/integrationStore.js";
 
-declare type nuimoOptions = { name: "nuimo"; id: string };
-declare type roonOptions = {
-  name: "roon";
-  zone: string;
-  output: string;
-  nowPlaying?: {
-    imageKey?: string;
-  };
-};
-declare type IntegrationOptions = {
-  uuid: string;
-  app: roonOptions;
-  controller: nuimoOptions;
-  updatedAt?: number;
-  ownerUUID?: string;
-  status: "up" | "down";
-};
-
 class Integration {
   readonly uuid: string;
-  private readonly options: IntegrationOptions;
+  readonly options: IntegrationOptions;
   private readonly broker: Broker;
   private readonly mapping: MappingInterface;
-  private status: "up" | "down";
+  status: "up" | "down";
   private readonly killTopic: string;
   private readonly ownerUUID: string;
 
@@ -43,6 +29,7 @@ class Integration {
     this.uuid = options.uuid;
     this.ownerUUID = options.ownerUUID;
     this.killTopic = `nuIntegrations/${this.options.uuid}/kill`;
+    // this.touchTopic = `nuIntegrations/${this.options.uuid}/touch`;
     this.mapping = this.routeMapping();
     this.mapping.integration = this;
     this.status = options.status;
@@ -79,40 +66,36 @@ class Integration {
     return IntegrationStore.find({
       integrationUUID: uuid,
       ownerUUID: ownerUUID,
-    }).then(
-      (attr) =>
-        new Integration(
-          Integration.mutate(attr),
-          new Broker(this.getBrokerConfig()),
-        ),
-    );
+    }).then((attr) => {
+      return new Integration(
+        Integration.mutate(attr),
+        new Broker(this.getBrokerConfig()),
+      );
+    });
   }
 
   up(): Promise<Integration> {
-    // return this.pushKillMessage()
-    //   .then((b) => b.connect())
-    return this.broker
-      .connect()
-      .then((_) => this.mapping.up())
-      .then((_) =>
-        this.observeKillSwitch(this.broker.subscribe(this.killTopic)),
-      )
-      .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
-      .then((_) => (this.status = "up"))
-      .then((_) => this.updateDataSource())
-      .then((): Integration => this);
+    return (
+      this.broker
+        .connect()
+        .then((_) => this.mapping.up())
+        .then((_) => this.observeKillSwitch(this.broker.subscribe(this.killTopic)))
+        .then((_): void => logger.info(`Integration up: ${this.mapping.desc}`))
+        .then((_) => (this.status = "up"))
+        .then((): Integration => this)
+    );
   }
 
-  async down(): Promise<void> {
+  private async down(): Promise<void> {
     await this.mapping.down();
-    await this.broker.disconnect().then((_) => (this.status = "down"));
-
-    return this.updateDataSource()
+    await this.broker
+      .disconnect()
+      .then((_) => (this.status = "down"))
       .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`))
       .catch((e) => logger.error(`Integration down: ${e}`));
   }
 
-  async updateDataSource(newAppAttr?: Record<string, any>): Promise<unknown> {
+  async updateDataSource(newAppAttr?: newAppAttrs): Promise<unknown> {
     return await IntegrationStore.update(this.mutate(newAppAttr));
   }
 
@@ -180,7 +163,7 @@ class Integration {
     }
   }
 
-  private mutate(newAppAttr?: Record<string, any>): Result {
+  private mutate(newAppAttr?: newAppAttrs): Result {
     return {
       ownerUUID: this.ownerUUID,
       updatedAt: Date.now() / 1000, //TODO
@@ -192,4 +175,4 @@ class Integration {
   }
 }
 
-export { Integration, roonOptions, nuimoOptions };
+export { Integration };

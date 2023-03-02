@@ -25,8 +25,6 @@ export class RoonNuimoMapping implements MappingInterface {
   public readonly desc: string;
   public integration: Integration;
   private readonly nowPlayingTopic: string;
-  private readonly nowPlayingImageKeyTopic: string;
-
   constructor(options: {
     nuimo: string;
     zone: string;
@@ -40,7 +38,6 @@ export class RoonNuimoMapping implements MappingInterface {
     this.roonStateTopic = `roon/${options.zone}/state`;
     this.roonVolumeTopic = `roon/${options.zone}/outputs/${options.output}/volume/percent`;
     this.nowPlayingTopic = `roon/${options.zone}/now_playing/#`;
-    this.nowPlayingImageKeyTopic = `roon/${options.zone}/now_playing/image_key`;
     this.topicsToSubscribe = [
       this.operationTopic,
       this.roonStateTopic,
@@ -70,31 +67,12 @@ export class RoonNuimoMapping implements MappingInterface {
     );
 
     return of(
-      this.observeRoonNowPlaying(reactionObservable),
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
       this.observeNuimoRotate(operationObservable),
       this.observeNuimoCommand(operationObservable),
     ).pipe(mergeAll());
   };
-
-  private observeRoonNowPlaying(
-    operationObservable: Observable<[string, Buffer]>,
-  ): Observable<string> {
-    return operationObservable.pipe(
-      filter(([topic, _]) => topic === this.nowPlayingImageKeyTopic),
-      map(([_, payload]): string => payload.toString()),
-      map((imageId) => {
-        return {
-          nowPlaying: {
-            imageKey: imageId,
-          },
-        };
-      }),
-      tap((newAttr) => this.integration.updateDataSource(newAttr)),
-      map((obj) => JSON.stringify(obj)),
-    );
-  }
 
   private observeNuimoCommand(
     operationObservable: Observable<[string, Buffer]>,

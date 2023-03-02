@@ -1,5 +1,6 @@
 import { BrokerConfig } from "./brokerConfig.js";
-import { AsyncClient, AsyncMqttClient } from "async-mqtt";
+import pkg from "async-mqtt";
+const { AsyncClient } = pkg;
 import { pino } from "pino";
 import { fromEvent, Observable } from "rxjs";
 import MQTT from "mqtt";
@@ -7,7 +8,8 @@ import MQTT from "mqtt";
 const logger = pino();
 
 class Broker {
-  public client?: AsyncMqttClient;
+  //@ts-ignore
+  public client?: AsyncClient;
   private readonly config: BrokerConfig;
   desc: string;
 
