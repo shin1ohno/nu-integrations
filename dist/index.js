@@ -46,4 +46,3 @@ new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883"))
     }));
 });
 export { Integration };
-//# sourceMappingURL=index.js.map

@@ -9,7 +9,7 @@ const tableDefinition = defineTable({
     app: "map",
     controller: "map",
 }, "ownerUUID", "integrationUUID");
-const OWNER = "ae4af2c4-8154-4ed9-a963-7475ea54b9cd"; //one owner now
+const OWNER = "ae4af2c4-8154-4ed9-a963-7475ea54b9cd";
 export default class IntegrationStore {
     static async findAllForOwner(ownerUUID) {
         const res = await this.dynamoClient().queryAll({
@@ -51,4 +51,3 @@ export default class IntegrationStore {
     }
 }
 export { OWNER };
-//# sourceMappingURL=integrationStore.js.map

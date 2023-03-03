@@ -13,7 +13,6 @@ class Integration {
     status;
     killTopic;
     ownerUUID;
-    touchTopic;
     constructor(options, broker) {
         this.options = options;
         this.broker = broker;
@@ -136,4 +135,3 @@ class Integration {
     }
 }
 export { Integration };
-//# sourceMappingURL=integration.js.map
