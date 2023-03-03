@@ -1,15 +1,13 @@
 import { BrokerConfig } from "./brokerConfig.js";
-import pkg from "async-mqtt";
-const { AsyncClient } = pkg;
+import MQTT, { AsyncClient } from "async-mqtt";
+// const { AsyncClient } = pkg;
 import { pino } from "pino";
 import { fromEvent, Observable } from "rxjs";
-import MQTT from "mqtt";
+// import MQTT from "mqtt";
 
 const logger = pino();
 
 class Broker {
-  // eslint-disable-next-line
-  //@ts-ignore
   public client?: AsyncClient;
   private readonly config: BrokerConfig;
   desc: string;
@@ -21,28 +19,28 @@ class Broker {
 
   connect(): Promise<Broker> {
     return new Promise((resolve, _) => {
-      const c = MQTT.connect(this.config.url, this.config.options);
-      this.client = new AsyncClient(c);
+      MQTT.connectAsync(this.config.url, this.config.options).then(c => {
+        this.client = c;
 
-      this.client.on("end", () => {
-        logger.info(
-          `Disconnecting from MQTT Broker(${
-            this.config.url
-          }) at ${new Date().toISOString()}`,
-        );
-      });
+        this.client.on("end", () => {
+          logger.info(
+            `Disconnecting from MQTT Broker(${
+              this.config.url
+            }) at ${new Date().toISOString()}`
+          );
+        });
 
-      this.client.on("error", (e) => {
-        logger.error(`Error from MQTT Client(${this.config.url}):`);
-        logger.error(e);
-      });
+        this.client.on("error", (e) => {
+          logger.error(`Error from MQTT Client(${this.config.url}):`);
+          logger.error(e);
+        });
 
-      this.client.on("connect", () => {
         logger.info(
           `Connected to MQTT Broker(${
             this.config.url
-          }) at ${new Date().toISOString()}`,
+          }) at ${new Date().toISOString()}`
         );
+
         resolve(this);
       });
     });
@@ -69,7 +67,7 @@ class Broker {
       this.client.subscribe(topic);
     } else {
       logger.error(
-        "Client is not initiated for this broker. Call connect() before subscribe.",
+        "Client is not initiated for this broker. Call connect() before subscribe."
       );
     }
     return this.on("message");
