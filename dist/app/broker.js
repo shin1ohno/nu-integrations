@@ -1,7 +1,6 @@
-import { AsyncClient } from "async-mqtt";
+import MQTT from "async-mqtt";
 import { pino } from "pino";
 import { fromEvent } from "rxjs";
-import MQTT from "mqtt";
 const logger = pino();
 class Broker {
     client;
@@ -13,16 +12,15 @@ class Broker {
     }
     connect() {
         return new Promise((resolve, _) => {
-            const c = MQTT.connect(this.config.url, this.config.options);
-            this.client = new AsyncClient(c);
-            this.client.on("end", () => {
-                logger.info(`Disconnecting from MQTT Broker(${this.config.url}) at ${new Date().toISOString()}`);
-            });
-            this.client.on("error", (e) => {
-                logger.error(`Error from MQTT Client(${this.config.url}):`);
-                logger.error(e);
-            });
-            this.client.on("connect", () => {
+            MQTT.connectAsync(this.config.url, this.config.options).then(c => {
+                this.client = c;
+                this.client.on("end", () => {
+                    logger.info(`Disconnecting from MQTT Broker(${this.config.url}) at ${new Date().toISOString()}`);
+                });
+                this.client.on("error", (e) => {
+                    logger.error(`Error from MQTT Client(${this.config.url}):`);
+                    logger.error(e);
+                });
                 logger.info(`Connected to MQTT Broker(${this.config.url}) at ${new Date().toISOString()}`);
                 resolve(this);
             });
@@ -30,7 +28,7 @@ class Broker {
     }
     async disconnect() {
         if (this.connected()) {
-            return await this.client.end();
+            return await this.client?.end();
         }
         else {
             return await new Promise((x, _) => x(undefined));
@@ -70,7 +68,13 @@ class Broker {
         }
     }
     on(event) {
-        return fromEvent(this.client, event);
+        if (this.client) {
+            return fromEvent(this.client, event);
+        }
+        else {
+            throw "No client to subscribe";
+        }
     }
 }
 export { Broker };
+//# sourceMappingURL=broker.js.map

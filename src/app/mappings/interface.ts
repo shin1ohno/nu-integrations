@@ -15,7 +15,9 @@ declare type roonOptions = {
   name: "roon";
   zone: string;
   output: string;
-  roonNowPlayingAttrs?;
+  nowPlaying?: {
+    imageKey: string;
+  };
 };
 declare type IntegrationOptions = {
   uuid: string;

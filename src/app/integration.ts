@@ -29,7 +29,6 @@ class Integration {
     this.uuid = options.uuid;
     this.ownerUUID = options.ownerUUID;
     this.killTopic = `nuIntegrations/${this.options.uuid}/kill`;
-    // this.touchTopic = `nuIntegrations/${this.options.uuid}/touch`;
     this.mapping = this.routeMapping();
     this.mapping.integration = this;
     this.status = options.status;

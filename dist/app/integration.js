@@ -13,6 +13,7 @@ class Integration {
     status;
     killTopic;
     ownerUUID;
+    touchTopic;
     constructor(options, broker) {
         this.options = options;
         this.broker = broker;
@@ -50,7 +51,9 @@ class Integration {
         return IntegrationStore.find({
             integrationUUID: uuid,
             ownerUUID: ownerUUID,
-        }).then((attr) => new Integration(Integration.mutate(attr), new Broker(this.getBrokerConfig())));
+        }).then((attr) => {
+            return new Integration(Integration.mutate(attr), new Broker(this.getBrokerConfig()));
+        });
     }
     up() {
         return this.broker
@@ -59,13 +62,13 @@ class Integration {
             .then((_) => this.observeKillSwitch(this.broker.subscribe(this.killTopic)))
             .then((_) => logger.info(`Integration up: ${this.mapping.desc}`))
             .then((_) => (this.status = "up"))
-            .then((_) => this.updateDataSource())
             .then(() => this);
     }
     async down() {
         await this.mapping.down();
-        await this.broker.disconnect().then((_) => (this.status = "down"));
-        return this.updateDataSource()
+        await this.broker
+            .disconnect()
+            .then((_) => (this.status = "down"))
             .then((_) => logger.info(`Integration down: ${this.mapping.desc}`))
             .catch((e) => logger.error(`Integration down: ${e}`));
     }
@@ -133,3 +136,4 @@ class Integration {
     }
 }
 export { Integration };
+//# sourceMappingURL=integration.js.map

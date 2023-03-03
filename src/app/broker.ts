@@ -1,9 +1,7 @@
 import { BrokerConfig } from "./brokerConfig.js";
 import MQTT, { AsyncClient } from "async-mqtt";
-// const { AsyncClient } = pkg;
 import { pino } from "pino";
 import { fromEvent, Observable } from "rxjs";
-// import MQTT from "mqtt";
 
 const logger = pino();
 
@@ -48,7 +46,7 @@ class Broker {
 
   async disconnect(): Promise<void> {
     if (this.connected()) {
-      return await this.client.end();
+      return await this.client?.end();
     } else {
       return await new Promise((x, _) => x(undefined));
     }
@@ -89,8 +87,12 @@ class Broker {
     }
   }
 
-  private on(event): Observable<[string, Buffer]> {
-    return fromEvent(this.client, event) as Observable<[string, Buffer]>;
+  private on(event: string): Observable<[string, Buffer]> {
+    if (this.client) {
+      return fromEvent(this.client, event) as Observable<[string, Buffer]>;
+    } else {
+      throw "No client to subscribe"
+    }
   }
 }
 
