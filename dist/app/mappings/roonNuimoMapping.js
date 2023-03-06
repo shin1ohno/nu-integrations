@@ -49,7 +49,7 @@ export class RoonNuimoMapping {
             ];
         }), filter(([c, _]) => typeof c !== "undefined"), tap(([command, parameters]) => {
             if (command === "relativeVolumeChange") {
-                this.setVolume(parameters[0]);
+                this.setVolume(parameters[0], (this.routing.dampingFactor || 60));
             }
             else {
                 this.command(command);
@@ -73,8 +73,8 @@ export class RoonNuimoMapping {
         this.broker.publish(this.nuimoReactionTopic, payload);
         return payload;
     }
-    setVolume(volume) {
-        const relativeVolume = volume * 60;
+    setVolume(volume, dampingFactor) {
+        const relativeVolume = volume * dampingFactor;
         this.broker.publish(this.volumeSetTopic, relativeVolume.toString());
         return relativeVolume.toString();
     }

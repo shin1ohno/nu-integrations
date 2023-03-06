@@ -33,6 +33,6 @@ declare type newAppAttrs = {
     };
 };
 export { MappingInterface, IntegrationOptions, newAppAttrs, nuimoOptions, roonOptions, };
-declare type nuimoAction = "hover" | "rotate" | "rotateLeft" | "rotateRight" | "select" | "selectUp" | "selectDown" | "swipeUp" | "swipeDown" | "swipeLeft" | "swipeRight" | "touchTop" | "touchLeft" | "touchRight" | "touchBottom" | "longTouchLeft" | "longTouchRight" | "longTouchBottom";
-declare type roonControl = "play" | "pause" | "playpause" | "stop" | "previous" | "next" | "relativeVolumeChange";
+declare type nuimoAction = "hover" | "rotate" | "rotateLeft" | "rotateRight" | "select" | "selectUp" | "selectDown" | "swipeUp" | "swipeDown" | "swipeLeft" | "swipeRight" | "touchTop" | "touchLeft" | "touchRight" | "touchBottom" | "longTouchLeft" | "longTouchRight" | "longTouchBottom" | "dampingFactor";
+declare type roonControl = "play" | "pause" | "playpause" | "stop" | "previous" | "next" | "relativeVolumeChange" | number;
 export type Routing = Partial<Record<nuimoAction, roonControl>>;
