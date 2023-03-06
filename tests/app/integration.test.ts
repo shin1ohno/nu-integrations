@@ -10,7 +10,7 @@ describe("Integration", () => {
 
   describe("up", () => {
     it("should initialise integration and fire it up", async () => {
-      const broker = new Broker(new BrokerConfig());
+      const broker = new Broker(BrokerConfig.fromEnv());
       const brokerSpy = jest.spyOn(broker, "subscribe");
 
       IntegrationStore.update = jest.fn();
@@ -48,7 +48,7 @@ describe("Integration", () => {
             id: "c381df4eff6a",
           },
         },
-        new Broker(new BrokerConfig("mqtt://127.0.0.1:1883")),
+        new Broker(BrokerConfig.fromEnv()),
       );
 
       const i3 = new Integration(
@@ -66,7 +66,7 @@ describe("Integration", () => {
             id: "c381df4eff6a",
           },
         },
-        new Broker(new BrokerConfig("mqtt://127.0.0.1:1883")),
+        new Broker(BrokerConfig.fromEnv()),
       );
 
       await i1.up().then((_t) => {

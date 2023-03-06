@@ -9,7 +9,7 @@ describe("RoonNuimoIntegration", () => {
   });
 
   it("has the right routing", async () => {
-    const b = new Broker(new BrokerConfig());
+    const b = new Broker(BrokerConfig.fromEnv());
     const i = new RoonNuimoMapping({
       nuimo: "xxx",
       zone: "yyy",
@@ -78,7 +78,7 @@ describe("RoonNuimoIntegration", () => {
   });
 
   it("doesn't route when insufficient ifno given", async () => {
-    const b = new Broker(new BrokerConfig());
+    const b = new Broker(BrokerConfig.fromEnv());
     const i = new RoonNuimoMapping({
       nuimo: "xxx",
       zone: "yyy",

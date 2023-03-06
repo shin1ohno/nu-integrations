@@ -8,7 +8,7 @@ import { logger } from "./app/utils.js";
 
 logger.info("Start nu-integration backend process......");
 
-new Broker(new BrokerConfig("mqtt://mqbroker.home.local:1883"))
+new Broker(BrokerConfig.fromEnv())
   .connect()
   .then((b) => {
     const observable = b.subscribe([

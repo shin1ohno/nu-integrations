@@ -23,7 +23,7 @@ describe("BrokerConfig", () => {
 
 describe("Broker", () => {
   it("it doesn't have client by default", () => {
-    const b = new Broker(new BrokerConfig());
+    const b = new Broker(BrokerConfig.fromEnv());
     expect(b.client).toBeFalsy();
   });
 });
