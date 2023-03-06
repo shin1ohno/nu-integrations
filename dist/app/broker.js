@@ -12,7 +12,7 @@ class Broker {
     }
     connect() {
         return new Promise((resolve, _) => {
-            MQTT.connectAsync(this.config.url, this.config.options).then(c => {
+            MQTT.connectAsync(this.config.url, this.config.options).then((c) => {
                 this.client = c;
                 this.client.on("end", () => {
                     logger.info(`Disconnecting from MQTT Broker(${this.config.url}) at ${new Date().toISOString()}`);
