@@ -11,7 +11,6 @@ declare class Integration {
     constructor(options: IntegrationOptions, broker: Broker);
     static mutate(attr: any): IntegrationOptions;
     static all(ownerUUID?: string): Promise<Integration[]>;
-    private static getBrokerConfig;
     static find(uuid: string, ownerUUID?: string): Promise<Integration>;
     up(): Promise<Integration>;
     private down;
@@ -19,7 +18,6 @@ declare class Integration {
     pushKillMessage(): Promise<unknown>;
     private observeKillSwitch;
     awaken(): boolean;
-    next(): Promise<Integration>;
     private routeMapping;
     private mutate;
 }

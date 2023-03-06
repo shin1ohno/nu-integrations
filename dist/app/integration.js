@@ -38,21 +38,15 @@ class Integration {
         return IntegrationStore.findAllForOwner(ownerUUID).then((attrs) => {
             return attrs
                 .map((attr) => Integration.mutate(attr))
-                .map((c) => new Integration(c, new Broker(this.getBrokerConfig())));
+                .map((c) => new Integration(c, new Broker(BrokerConfig.fromEnv())));
         });
-    }
-    static getBrokerConfig() {
-        if (process.env.NODE_ENV === "test") {
-            return new BrokerConfig();
-        }
-        return new BrokerConfig("mqtt://mqbroker.home.local:1883");
     }
     static find(uuid, ownerUUID = OWNER) {
         return IntegrationStore.find({
             integrationUUID: uuid,
             ownerUUID: ownerUUID,
         }).then((attr) => {
-            return new Integration(Integration.mutate(attr), new Broker(this.getBrokerConfig()));
+            return new Integration(Integration.mutate(attr), new Broker(BrokerConfig.fromEnv()));
         });
     }
     up() {
@@ -96,20 +90,6 @@ class Integration {
     }
     awaken() {
         return this.status === "up";
-    }
-    next() {
-        return Integration.all().then((all) => {
-            const controlled = all
-                .filter((i) => i.options.controller.name === this.options.controller.name)
-                .filter((i) => i.options.controller.id === this.options.controller.id);
-            const n = controlled.indexOf(this);
-            if (controlled.length === n + 1) {
-                return controlled.at(0);
-            }
-            else {
-                return controlled.at(n + 1);
-            }
-        });
     }
     routeMapping() {
         switch (`${this.options.app.name}-${this.options.controller.name}`) {
