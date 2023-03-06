@@ -17,14 +17,14 @@ class Broker {
 
   connect(): Promise<Broker> {
     return new Promise((resolve, _) => {
-      MQTT.connectAsync(this.config.url, this.config.options).then(c => {
+      MQTT.connectAsync(this.config.url, this.config.options).then((c) => {
         this.client = c;
 
         this.client.on("end", () => {
           logger.info(
             `Disconnecting from MQTT Broker(${
               this.config.url
-            }) at ${new Date().toISOString()}`
+            }) at ${new Date().toISOString()}`,
           );
         });
 
@@ -36,7 +36,7 @@ class Broker {
         logger.info(
           `Connected to MQTT Broker(${
             this.config.url
-          }) at ${new Date().toISOString()}`
+          }) at ${new Date().toISOString()}`,
         );
 
         resolve(this);
@@ -65,7 +65,7 @@ class Broker {
       this.client.subscribe(topic);
     } else {
       logger.error(
-        "Client is not initiated for this broker. Call connect() before subscribe."
+        "Client is not initiated for this broker. Call connect() before subscribe.",
       );
     }
     return this.on("message");
@@ -91,7 +91,7 @@ class Broker {
     if (this.client) {
       return fromEvent(this.client, event) as Observable<[string, Buffer]>;
     } else {
-      throw "No client to subscribe"
+      throw "No client to subscribe";
     }
   }
 }
