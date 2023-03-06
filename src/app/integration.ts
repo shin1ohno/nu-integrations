@@ -17,9 +17,9 @@ import IntegrationStore, {
 class Integration {
   readonly uuid: string;
   readonly options: IntegrationOptions;
+  status: "up" | "down";
   private readonly broker: Broker;
   private readonly mapping: MappingInterface;
-  status: "up" | "down";
   private readonly killTopic: string;
   private readonly ownerUUID: string;
 
@@ -78,15 +78,6 @@ class Integration {
       .then((): Integration => this);
   }
 
-  private async down(): Promise<void> {
-    await this.mapping.down();
-    await this.broker
-      .disconnect()
-      .then((_) => (this.status = "down"))
-      .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`))
-      .catch((e) => logger.error(`Integration down: ${e}`));
-  }
-
   async updateDataSource(newAppAttr?: newAppAttrs): Promise<unknown> {
     return await IntegrationStore.update(this.mutate(newAppAttr));
   }
@@ -105,6 +96,19 @@ class Integration {
     });
   }
 
+  awaken(): boolean {
+    return this.status === "up";
+  }
+
+  private async down(): Promise<void> {
+    await this.mapping.down();
+    await this.broker
+      .disconnect()
+      .then((_) => (this.status = "down"))
+      .then((_): void => logger.info(`Integration down: ${this.mapping.desc}`))
+      .catch((e) => logger.error(`Integration down: ${e}`));
+  }
+
   private observeKillSwitch(
     observable: Observable<[string, Buffer]>,
   ): Subscription {
@@ -118,10 +122,6 @@ class Integration {
       .subscribe((_) => {
         logger.info(`Kill switch detected. Executing down procedure.`);
       });
-  }
-
-  awaken(): boolean {
-    return this.status === "up";
   }
 
   private routeMapping(): MappingInterface {

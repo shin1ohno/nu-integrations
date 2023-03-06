@@ -2,6 +2,7 @@ import { defineTable, DynamoTypeFrom, TableClient } from "@hexlabs/dynamo-ts";
 import AWS from "aws-sdk";
 import { UpdateResult } from "@hexlabs/dynamo-ts/dist/dynamo-updater.js";
 import { nuimoOptions, roonOptions, Routing } from "../mappings/interface.js";
+
 const { DynamoDB } = AWS;
 
 const tableDefinition = defineTable(

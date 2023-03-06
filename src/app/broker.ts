@@ -7,8 +7,8 @@ const logger = pino();
 
 class Broker {
   public client?: AsyncClient;
+  public readonly desc: string;
   private readonly config: BrokerConfig;
-  desc: string;
 
   constructor(config: BrokerConfig) {
     this.config = config;

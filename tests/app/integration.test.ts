@@ -1,3 +1,5 @@
+// noinspection TypeScriptValidateTypes
+
 import { Integration } from "app/integration";
 import { BrokerConfig } from "app/brokerConfig";
 import { Broker } from "app/broker";
