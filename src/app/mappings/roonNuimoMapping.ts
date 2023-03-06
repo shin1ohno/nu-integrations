@@ -10,7 +10,6 @@ import {
   Subscription,
   tap,
 } from "rxjs";
-import { logger } from "../utils.js";
 import { Integration } from "../integration.js";
 
 export class RoonNuimoMapping implements MappingInterface {
@@ -26,6 +25,7 @@ export class RoonNuimoMapping implements MappingInterface {
   public integration: Integration;
   private readonly nowPlayingTopic: string;
   private readonly routing: Routing;
+
   constructor(options: {
     nuimo: string;
     zone: string;
@@ -81,7 +81,7 @@ export class RoonNuimoMapping implements MappingInterface {
     operationObservable: Observable<[string, Buffer]>,
   ): Observable<string> {
     return operationObservable.pipe(
-      filter(_ => !!this.routing),
+      filter((_) => !!this.routing),
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),
@@ -90,13 +90,7 @@ export class RoonNuimoMapping implements MappingInterface {
           this.routing[JSON.parse(payload.toString()).subject],
       ),
       filter((c) => typeof c !== "undefined"),
-      tap((command) => {
-        if (command === "switchApp") {
-          logger.info(`Switching from :${this.desc}`);
-        } else {
-          this.command(command);
-        }
-      }),
+      tap((command) => this.command(command)),
     );
   }
 
