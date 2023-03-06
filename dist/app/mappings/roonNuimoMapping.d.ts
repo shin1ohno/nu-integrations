@@ -1,5 +1,5 @@
 import { Broker } from "../broker.js";
-import { MappingInterface } from "./interface.js";
+import { MappingInterface, Routing } from "./interface.js";
 import { Subscription } from "rxjs";
 import { Integration } from "../integration.js";
 export declare class RoonNuimoMapping implements MappingInterface {
@@ -19,6 +19,7 @@ export declare class RoonNuimoMapping implements MappingInterface {
         nuimo: string;
         zone: string;
         output: string;
+        routing: Routing;
         broker: Broker;
     });
     up(): Subscription;

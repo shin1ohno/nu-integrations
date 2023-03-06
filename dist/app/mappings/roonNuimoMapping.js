@@ -1,5 +1,4 @@
 import { filter, map, mergeAll, of, partition, tap, } from "rxjs";
-import { logger } from "../utils.js";
 export class RoonNuimoMapping {
     commandTopic;
     operationTopic;
@@ -28,11 +27,7 @@ export class RoonNuimoMapping {
             this.nowPlayingTopic,
         ];
         this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
-        this.routing = {
-            select: "playpause",
-            swipeRight: "next",
-            swipeLeft: "previous",
-        };
+        this.routing = options.routing;
         this.broker = options.broker;
     }
     up() {
@@ -46,14 +41,7 @@ export class RoonNuimoMapping {
         return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
     };
     observeNuimoCommand(operationObservable) {
-        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => this.routing[JSON.parse(payload.toString()).subject]), filter((c) => typeof c !== "undefined"), tap((command) => {
-            if (command === "switchApp") {
-                logger.info(`Switching from :${this.desc}`);
-            }
-            else {
-                this.command(command);
-            }
-        }));
+        return operationObservable.pipe(filter((_) => !!this.routing), filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => this.routing[JSON.parse(payload.toString()).subject]), filter((c) => typeof c !== "undefined"), tap((command) => this.command(command)));
     }
     observeNuimoRotate(operationObservable) {
         return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"), map(([_, payload]) => JSON.parse(payload.toString())), filter((p) => p.parameter && typeof p.parameter === "object"), map((p) => p.parameter[0]), tap((volume) => this.setVolume(volume)), map((volume) => volume.toString()));

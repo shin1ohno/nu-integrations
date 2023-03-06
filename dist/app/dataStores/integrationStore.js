@@ -8,6 +8,7 @@ const tableDefinition = defineTable({
     status: "string",
     app: "map",
     controller: "map",
+    routing: "map",
 }, "ownerUUID", "integrationUUID");
 const OWNER = "ae4af2c4-8154-4ed9-a963-7475ea54b9cd";
 export default class IntegrationStore {

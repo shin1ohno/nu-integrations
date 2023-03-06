@@ -1,6 +1,6 @@
 import { DynamoTypeFrom } from "@hexlabs/dynamo-ts";
 import { UpdateResult } from "@hexlabs/dynamo-ts/dist/dynamo-updater.js";
-import { nuimoOptions, roonOptions } from "../mappings/interface.js";
+import { nuimoOptions, roonOptions, Routing } from "../mappings/interface.js";
 declare const tableDefinition: {
     definition: {
         ownerUUID: "string";
@@ -9,6 +9,7 @@ declare const tableDefinition: {
         status: "string";
         app: "map";
         controller: "map";
+        routing: "map";
     };
     partitionKey: "ownerUUID";
     sortKey: "integrationUUID";
@@ -21,6 +22,7 @@ export type Result = {
     controller: nuimoOptions;
     ownerUUID: string;
     updatedAt: number;
+    routing: Routing;
     status: "up" | "down";
 };
 declare const OWNER = "ae4af2c4-8154-4ed9-a963-7475ea54b9cd";
