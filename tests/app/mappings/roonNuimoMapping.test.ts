@@ -15,6 +15,11 @@ describe("RoonNuimoIntegration", () => {
       zone: "yyy",
       output: "zzz",
       broker: b,
+      routing: {
+        select: "playpause",
+        swipeRight: "next",
+        swipeLeft: "previous",
+      },
     });
 
     jest.spyOn(b, "publish");
@@ -77,6 +82,7 @@ describe("RoonNuimoIntegration", () => {
       zone: "yyy",
       output: "zzz",
       broker: b,
+      routing: {},
     });
 
     jest.spyOn(b, "publish");
@@ -99,6 +105,7 @@ describe("RoonNuimoIntegration", () => {
       zone: "yyy",
       output: "zzz",
       broker: b,
+      routing: {},
     });
 
     jest.spyOn(b, "unsubscribe");

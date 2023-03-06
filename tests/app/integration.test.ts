@@ -19,6 +19,7 @@ describe("Integration", () => {
         {
           uuid: "1",
           status: "down",
+          routing: {},
           app: {
             name: "roon",
             zone: "Qutest (BNC)1",
@@ -36,6 +37,7 @@ describe("Integration", () => {
         {
           uuid: "1",
           status: "down",
+          routing: {},
           app: {
             name: "roon",
             zone: "Qutest (BNC)2",
@@ -53,6 +55,7 @@ describe("Integration", () => {
         {
           uuid: "1",
           status: "down",
+          routing: {},
           app: {
             name: "roon",
             zone: "Qutest (BNC)3",
