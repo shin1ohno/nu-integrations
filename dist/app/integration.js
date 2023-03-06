@@ -8,9 +8,9 @@ import IntegrationStore, { OWNER, } from "./dataStores/integrationStore.js";
 class Integration {
     uuid;
     options;
+    status;
     broker;
     mapping;
-    status;
     killTopic;
     ownerUUID;
     constructor(options, broker) {
@@ -58,14 +58,6 @@ class Integration {
             .then((_) => (this.status = "up"))
             .then(() => this);
     }
-    async down() {
-        await this.mapping.down();
-        await this.broker
-            .disconnect()
-            .then((_) => (this.status = "down"))
-            .then((_) => logger.info(`Integration down: ${this.mapping.desc}`))
-            .catch((e) => logger.error(`Integration down: ${e}`));
-    }
     async updateDataSource(newAppAttr) {
         return await IntegrationStore.update(this.mutate(newAppAttr));
     }
@@ -81,15 +73,23 @@ class Integration {
                 .then(() => resolve(this.broker));
         });
     }
+    awaken() {
+        return this.status === "up";
+    }
+    async down() {
+        await this.mapping.down();
+        await this.broker
+            .disconnect()
+            .then((_) => (this.status = "down"))
+            .then((_) => logger.info(`Integration down: ${this.mapping.desc}`))
+            .catch((e) => logger.error(`Integration down: ${e}`));
+    }
     observeKillSwitch(observable) {
         return observable
             .pipe(filter(([topic, _]) => topic === this.killTopic), map(([_, payload]) => JSON.parse(payload.toString())), filter((payload) => payload.all), tap((_) => this.down()))
             .subscribe((_) => {
             logger.info(`Kill switch detected. Executing down procedure.`);
         });
-    }
-    awaken() {
-        return this.status === "up";
     }
     routeMapping() {
         switch (`${this.options.app.name}-${this.options.controller.name}`) {

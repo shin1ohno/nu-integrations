@@ -3,6 +3,8 @@ import { MappingInterface, Routing } from "./interface.js";
 import { Subscription } from "rxjs";
 import { Integration } from "../integration.js";
 export declare class RoonNuimoMapping implements MappingInterface {
+    readonly desc: string;
+    integration: Integration;
     private readonly commandTopic;
     private readonly operationTopic;
     private readonly broker;
@@ -11,8 +13,6 @@ export declare class RoonNuimoMapping implements MappingInterface {
     private readonly roonVolumeTopic;
     private readonly topicsToSubscribe;
     private readonly nuimoReactionTopic;
-    readonly desc: string;
-    integration: Integration;
     private readonly nowPlayingTopic;
     private readonly routing;
     constructor(options: {

@@ -1,5 +1,7 @@
 import { filter, map, mergeAll, of, partition, tap, } from "rxjs";
 export class RoonNuimoMapping {
+    desc;
+    integration;
     commandTopic;
     operationTopic;
     broker;
@@ -8,8 +10,6 @@ export class RoonNuimoMapping {
     roonVolumeTopic;
     topicsToSubscribe;
     nuimoReactionTopic;
-    desc;
-    integration;
     nowPlayingTopic;
     routing;
     constructor(options) {

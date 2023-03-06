@@ -4,8 +4,8 @@ import { AsyncClient } from "async-mqtt";
 import { Observable } from "rxjs";
 declare class Broker {
     client?: AsyncClient;
+    readonly desc: string;
     private readonly config;
-    desc: string;
     constructor(config: BrokerConfig);
     connect(): Promise<Broker>;
     disconnect(): Promise<void>;

@@ -4,8 +4,8 @@ import { fromEvent } from "rxjs";
 const logger = pino();
 class Broker {
     client;
-    config;
     desc;
+    config;
     constructor(config) {
         this.config = config;
         this.desc = this.config.url;

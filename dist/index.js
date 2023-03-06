@@ -2,7 +2,7 @@
 import { Integration } from "./app/integration.js";
 import { Broker } from "./app/broker.js";
 import { BrokerConfig } from "./app/brokerConfig.js";
-import { filter, map, tap, mergeAll, of, throttleTime } from "rxjs";
+import { filter, map, mergeAll, of, tap, throttleTime } from "rxjs";
 import { logger } from "./app/utils.js";
 logger.info("Start nu-integration backend process......");
 new Broker(BrokerConfig.fromEnv())
