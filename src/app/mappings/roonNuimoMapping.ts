@@ -72,7 +72,6 @@ export class RoonNuimoMapping implements MappingInterface {
     return of(
       this.observeRoonState(reactionObservable),
       this.observeRoonVolume(reactionObservable),
-      this.observeNuimoRotate(operationObservable),
       this.observeNuimoCommand(operationObservable),
     ).pipe(mergeAll());
   };
@@ -82,33 +81,23 @@ export class RoonNuimoMapping implements MappingInterface {
   ): Observable<string> {
     return operationObservable.pipe(
       filter((_) => !!this.routing),
-      filter(
-        ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
-      ),
-      map(
-        ([_, payload]): string =>
-          this.routing[JSON.parse(payload.toString()).subject],
-      ),
-      filter((c) => typeof c !== "undefined"),
-      tap((command) => this.command(command)),
-    );
-  }
+      map(([_, payload]): [string, [number, number]] => {
+        const p = JSON.parse(payload.toString());
 
-  private observeNuimoRotate(
-    operationObservable: Observable<[string, Buffer]>,
-  ): Observable<string> {
-    return operationObservable.pipe(
-      filter(
-        ([_, payload]) => JSON.parse(payload.toString()).subject === "rotate",
-      ),
-      map(([_, payload]) => JSON.parse(payload.toString())),
-      filter(
-        (p: { parameter: Record<string, string> }) =>
-          p.parameter && typeof p.parameter === "object",
-      ),
-      map((p: { parameter: object }): number => p.parameter[0]),
-      tap((volume: number) => this.setVolume(volume)),
-      map((volume) => volume.toString()),
+        return [
+          this.routing[p.subject] as string,
+          p.parameter as [number, number],
+        ];
+      }),
+      filter(([c, _]) => typeof c !== "undefined"),
+      tap(([command, parameters]) => {
+        if (command === "relativeVolumeChange") {
+          this.setVolume(parameters[0]);
+        } else {
+          this.command(command);
+        }
+      }),
+      map((_) => ""),
     );
   }
 

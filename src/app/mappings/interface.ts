@@ -68,6 +68,7 @@ declare type roonControl =
   | "playpause"
   | "stop"
   | "previous"
-  | "next";
+  | "next"
+  | "relativeVolumeChange";
 
 export type Routing = Partial<Record<nuimoAction, roonControl>>;

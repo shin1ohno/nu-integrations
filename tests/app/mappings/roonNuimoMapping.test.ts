@@ -19,6 +19,7 @@ describe("RoonNuimoIntegration", () => {
         select: "playpause",
         swipeRight: "next",
         swipeLeft: "previous",
+        rotate: "relativeVolumeChange",
       },
     });
 
