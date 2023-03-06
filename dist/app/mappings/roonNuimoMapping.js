@@ -12,6 +12,7 @@ export class RoonNuimoMapping {
     desc;
     integration;
     nowPlayingTopic;
+    routing;
     constructor(options) {
         this.desc = `Roon(${options.zone}-${options.output}) <-> Nuimo(${options.nuimo}) <=> ${options.broker.desc})`;
         this.operationTopic = `nuimo/${options.nuimo}/operation`;
@@ -27,6 +28,11 @@ export class RoonNuimoMapping {
             this.nowPlayingTopic,
         ];
         this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
+        this.routing = {
+            select: "playpause",
+            swipeRight: "next",
+            swipeLeft: "previous",
+        };
         this.broker = options.broker;
     }
     up() {
@@ -40,13 +46,7 @@ export class RoonNuimoMapping {
         return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
     };
     observeNuimoCommand(operationObservable) {
-        const mapping = {
-            select: "playpause",
-            swipeRight: "next",
-            swipeLeft: "previous",
-            longTouchBottom: "switchApp",
-        };
-        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => mapping[JSON.parse(payload.toString()).subject]), filter((c) => typeof c !== "undefined"), tap((command) => {
+        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => this.routing[JSON.parse(payload.toString()).subject]), filter((c) => typeof c !== "undefined"), tap((command) => {
             if (command === "switchApp") {
                 logger.info(`Switching from :${this.desc}`);
             }

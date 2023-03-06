@@ -31,4 +31,7 @@ declare type newAppAttrs = {
         imageKey: string;
     };
 };
-export { MappingInterface, IntegrationOptions, newAppAttrs, nuimoOptions, roonOptions, };
+export { MappingInterface, IntegrationOptions, newAppAttrs, nuimoOptions, roonOptions };
+declare type nuimoAction = "select" | "swipeRight" | "swipeLeft";
+declare type roonControl = "play" | "pause" | "playpause" | "stop" | "previous" | "next";
+export type Routing = Record<nuimoAction, roonControl>;

@@ -14,6 +14,7 @@ export declare class RoonNuimoMapping implements MappingInterface {
     readonly desc: string;
     integration: Integration;
     private readonly nowPlayingTopic;
+    private readonly routing;
     constructor(options: {
         nuimo: string;
         zone: string;
