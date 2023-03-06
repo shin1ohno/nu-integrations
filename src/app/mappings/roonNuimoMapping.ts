@@ -1,5 +1,5 @@
 import { Broker } from "../broker.js";
-import { MappingInterface } from "./interface.js";
+import { MappingInterface, Routing } from "./interface.js";
 import {
   filter,
   map,
@@ -25,6 +25,7 @@ export class RoonNuimoMapping implements MappingInterface {
   public readonly desc: string;
   public integration: Integration;
   private readonly nowPlayingTopic: string;
+  private readonly routing: Routing;
   constructor(options: {
     nuimo: string;
     zone: string;
@@ -45,6 +46,11 @@ export class RoonNuimoMapping implements MappingInterface {
       this.nowPlayingTopic,
     ];
     this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
+    this.routing = {
+      select: "playpause",
+      swipeRight: "next",
+      swipeLeft: "previous",
+    };
     this.broker = options.broker;
   }
 
@@ -77,19 +83,13 @@ export class RoonNuimoMapping implements MappingInterface {
   private observeNuimoCommand(
     operationObservable: Observable<[string, Buffer]>,
   ): Observable<string> {
-    const mapping = {
-      select: "playpause",
-      swipeRight: "next",
-      swipeLeft: "previous",
-      longTouchBottom: "switchApp",
-    };
     return operationObservable.pipe(
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),
       map(
         ([_, payload]): string =>
-          mapping[JSON.parse(payload.toString()).subject],
+          this.routing[JSON.parse(payload.toString()).subject],
       ),
       filter((c) => typeof c !== "undefined"),
       tap((command) => {

@@ -38,5 +38,21 @@ export {
   IntegrationOptions,
   newAppAttrs,
   nuimoOptions,
-  roonOptions,
+  roonOptions
 };
+
+declare type nuimoAction = "select" | "swipeRight" | "swipeLeft";
+//All actions are:
+// 'hover'|          'rotate'|
+// 'rotateLeft'|     'rotateRight'|
+// 'select'|         'selectUp'|
+// 'selectDown'|     'swipeUp'|
+// 'swipeDown'|      'swipeLeft'|
+// 'swipeRight'|     'touchTop'|
+// 'touchLeft'|      'touchRight'|
+// 'touchBottom'|    'longTouchLeft'|
+// 'longTouchRight'| 'longTouchBottom';
+
+declare type roonControl = "play" | "pause" | "playpause" | "stop" | "previous" | "next";
+
+export type Routing = Record<nuimoAction, roonControl>;
