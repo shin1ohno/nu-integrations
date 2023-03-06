@@ -3,9 +3,15 @@ module.exports = {
     {
       script: "./dist/index.js",
       watch: ".",
+      name: "nu-integrations",
+      env_production: {
+        NODE_ENV: "production"
+      },
+      env_development: {
+        NODE_ENV: "development"
+      }
     }
   ],
-
   deploy: {
     production: {
       user: "admin",
@@ -14,7 +20,7 @@ module.exports = {
       repo: "https://github.com/shin1ohno/nu-integrations.git",
       path: "/home/admin/nu-integrations",
       "post-deploy":
-        "npm install && pm2 reload ecosystem.config.cjs --env production",
+        "\. $HOME/.nvm/nvm.sh && npm install && pm2 reload ecosystem.config.cjs --env production",
     },
   },
 };
