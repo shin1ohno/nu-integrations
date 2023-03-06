@@ -26,7 +26,6 @@ export declare class RoonNuimoMapping implements MappingInterface {
     down(): Promise<void>;
     private observe;
     private observeNuimoCommand;
-    private observeNuimoRotate;
     private observeRoonVolume;
     private observeRoonState;
     private command;

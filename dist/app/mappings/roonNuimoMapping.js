@@ -38,13 +38,23 @@ export class RoonNuimoMapping {
     }
     observe = (brokerEvents) => {
         const [operationObservable, reactionObservable] = partition(brokerEvents, ([topic, _]) => topic === this.operationTopic);
-        return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoRotate(operationObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
+        return of(this.observeRoonState(reactionObservable), this.observeRoonVolume(reactionObservable), this.observeNuimoCommand(operationObservable)).pipe(mergeAll());
     };
     observeNuimoCommand(operationObservable) {
-        return operationObservable.pipe(filter((_) => !!this.routing), filter(([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate"), map(([_, payload]) => this.routing[JSON.parse(payload.toString()).subject]), filter((c) => typeof c !== "undefined"), tap((command) => this.command(command)));
-    }
-    observeNuimoRotate(operationObservable) {
-        return operationObservable.pipe(filter(([_, payload]) => JSON.parse(payload.toString()).subject === "rotate"), map(([_, payload]) => JSON.parse(payload.toString())), filter((p) => p.parameter && typeof p.parameter === "object"), map((p) => p.parameter[0]), tap((volume) => this.setVolume(volume)), map((volume) => volume.toString()));
+        return operationObservable.pipe(filter((_) => !!this.routing), map(([_, payload]) => {
+            const p = JSON.parse(payload.toString());
+            return [
+                this.routing[p.subject],
+                p.parameter,
+            ];
+        }), filter(([c, _]) => typeof c !== "undefined"), tap(([command, parameters]) => {
+            if (command === "relativeVolumeChange") {
+                this.setVolume(parameters[0]);
+            }
+            else {
+                this.command(command);
+            }
+        }), map((_) => ""));
     }
     observeRoonVolume(reactionObservable) {
         return reactionObservable.pipe(filter(([topic, _]) => topic === this.roonVolumeTopic), map(([_, payload]) => payload.toString()), map((volume) => JSON.stringify({
