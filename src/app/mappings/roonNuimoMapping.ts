@@ -30,6 +30,7 @@ export class RoonNuimoMapping implements MappingInterface {
     nuimo: string;
     zone: string;
     output: string;
+    routing: Routing;
     broker: Broker;
   }) {
     this.desc = `Roon(${options.zone}-${options.output}) <-> Nuimo(${options.nuimo}) <=> ${options.broker.desc})`;
@@ -46,11 +47,7 @@ export class RoonNuimoMapping implements MappingInterface {
       this.nowPlayingTopic,
     ];
     this.nuimoReactionTopic = `nuimo/${options.nuimo}/reaction`;
-    this.routing = {
-      select: "playpause",
-      swipeRight: "next",
-      swipeLeft: "previous",
-    };
+    this.routing = options.routing;
     this.broker = options.broker;
   }
 
@@ -84,6 +81,7 @@ export class RoonNuimoMapping implements MappingInterface {
     operationObservable: Observable<[string, Buffer]>,
   ): Observable<string> {
     return operationObservable.pipe(
+      filter(_ => !!this.routing),
       filter(
         ([_, payload]) => JSON.parse(payload.toString()).subject !== "rotate",
       ),

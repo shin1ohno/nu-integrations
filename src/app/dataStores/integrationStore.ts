@@ -1,7 +1,7 @@
 import { defineTable, DynamoTypeFrom, TableClient } from "@hexlabs/dynamo-ts";
 import AWS from "aws-sdk";
 import { UpdateResult } from "@hexlabs/dynamo-ts/dist/dynamo-updater.js";
-import { nuimoOptions, roonOptions } from "../mappings/interface.js";
+import { nuimoOptions, roonOptions, Routing } from "../mappings/interface.js";
 const { DynamoDB } = AWS;
 
 const tableDefinition = defineTable(
@@ -12,6 +12,7 @@ const tableDefinition = defineTable(
     status: "string",
     app: "map",
     controller: "map",
+    routing: "map",
   },
   "ownerUUID",
   "integrationUUID",
@@ -25,6 +26,7 @@ export type Result = {
   controller: nuimoOptions;
   ownerUUID: string;
   updatedAt: number;
+  routing: Routing;
   status: "up" | "down";
 };
 

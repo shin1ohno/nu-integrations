@@ -42,6 +42,7 @@ class Integration {
       updatedAt: attr.updatedAt,
       ownerUUID: attr.ownerUUID,
       status: attr.status,
+      routing: attr.routing,
     };
   }
 
@@ -155,6 +156,7 @@ class Integration {
           nuimo: this.options.controller.id,
           zone: this.options.app.zone,
           output: this.options.app.output,
+          routing: this.options.routing,
           broker: this.broker,
         });
       default:
@@ -168,6 +170,7 @@ class Integration {
       updatedAt: Date.now() / 1000, //TODO
       integrationUUID: this.uuid,
       status: this.status,
+      routing: this.options.routing,
       app: Object.assign(this.options.app, newAppAttr),
       controller: this.options.controller,
     };
