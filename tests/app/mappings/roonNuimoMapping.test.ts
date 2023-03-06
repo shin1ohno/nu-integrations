@@ -20,6 +20,7 @@ describe("RoonNuimoIntegration", () => {
         swipeRight: "next",
         swipeLeft: "previous",
         rotate: "relativeVolumeChange",
+        dampingFactor: 80,
       },
     });
 
@@ -68,7 +69,7 @@ describe("RoonNuimoIntegration", () => {
           Buffer.from(JSON.stringify({ subject: "rotate", parameter: [2, 3] })),
         ],
         "roon/yyy/outputs/zzz/volume/set/relative",
-        "120",
+        "160",
       ],
     ]) {
       await observation(of(input as [string, Buffer])).subscribe();

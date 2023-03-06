@@ -60,7 +60,8 @@ declare type nuimoAction =
   | "touchBottom"
   | "longTouchLeft"
   | "longTouchRight"
-  | "longTouchBottom";
+  | "longTouchBottom"
+  | "dampingFactor";
 
 declare type roonControl =
   | "play"
@@ -69,6 +70,7 @@ declare type roonControl =
   | "stop"
   | "previous"
   | "next"
-  | "relativeVolumeChange";
+  | "relativeVolumeChange"
+  | number;
 
 export type Routing = Partial<Record<nuimoAction, roonControl>>;
