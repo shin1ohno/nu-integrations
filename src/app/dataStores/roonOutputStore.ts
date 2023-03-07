@@ -13,20 +13,18 @@ const tableDefinition = defineTable(
     updatedAt: "number",
     displayName: "string",
     status: "string",
-    core: "map"
+    core: "map",
   },
   "ownerUUID",
-  "outputID"
+  "outputID",
 );
 
 export type OutputAttributes = DynamoTypeFrom<typeof tableDefinition>;
 
 class roonOutputStore {
-  static async findAllForOwner(
-    ownerUUID: string
-  ): Promise<OutputAttributes[]> {
+  static async findAllForOwner(ownerUUID: string): Promise<OutputAttributes[]> {
     const res = await this.dynamoClient().queryAll({
-      ownerUUID: ownerUUID
+      ownerUUID: ownerUUID,
     });
     return res.member;
   }
@@ -63,13 +61,13 @@ class roonOutputStore {
 
   private static dynamoClient(): TableClient<typeof tableDefinition> {
     const client = new DynamoDB.DocumentClient({
-      region: "eu-west-2"
+      region: "eu-west-2",
     });
 
     return TableClient.build(tableDefinition, {
       client: client,
       logStatements: false,
-      tableName: "RoonOutputs"
+      tableName: "RoonOutputs",
     });
   }
 }
