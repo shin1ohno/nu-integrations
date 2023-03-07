@@ -51,6 +51,14 @@ export class RoonNuimoMapping {
             if (command === "relativeVolumeChange") {
                 this.setVolume(parameters[0], (this.routing.dampingFactor || 60));
             }
+            else if (command === "next") {
+                this.nuimoReaction(JSON.stringify({ status: "next", parameter: 0 }));
+                this.command(command);
+            }
+            else if (command === "previous") {
+                this.nuimoReaction(JSON.stringify({ status: "previous", parameter: 0 }));
+                this.command(command);
+            }
             else {
                 this.command(command);
             }
