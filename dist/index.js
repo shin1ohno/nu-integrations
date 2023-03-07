@@ -4,15 +4,40 @@ import { Broker } from "./app/broker.js";
 import { BrokerConfig } from "./app/brokerConfig.js";
 import { filter, map, mergeAll, of, tap, throttleTime } from "rxjs";
 import { logger } from "./app/utils.js";
+import roonOutputStore from "./app/dataStores/roonOutputStore.js";
+import { OWNER } from "./app/dataStores/integrationStore.js";
 logger.info("Start nu-integration backend process......");
 new Broker(BrokerConfig.fromEnv())
     .connect()
     .then((b) => {
     const observable = b.subscribe([
         "roon/+/now_playing/image_key",
+        "roon/+/outputs/+/env",
         "nuIntegrations/+/touch",
     ]);
-    of(observable.pipe(filter(([topic, _]) => !!topic.match(/^roon\/(.+)\/now_playing\/image_key$/gmu)), map(([topic, payload]) => {
+    of(observable.pipe(filter(([topic, _]) => !!topic.match(/^roon\/(.+)\/outputs\/(.+)\/env$/gmu)), map(([topic, payload]) => {
+        return [
+            topic.split("/")[3],
+            JSON.parse(payload.toString()),
+        ];
+    }), tap(([outputDisplayName, envData]) => {
+        roonOutputStore.update({
+            outputID: envData["output_id"],
+            ownerUUID: OWNER,
+            displayName: outputDisplayName,
+            updatedAt: Date.now() / 1000,
+            zoneId: envData["zone_id"],
+            zoneDisplayName: envData["zone_display_name"],
+            status: envData["status"],
+            core: {
+                coreID: envData["core_id"],
+                displayName: envData["core_display_name"],
+                displayVersion: envData["core_display_version"],
+                address: envData["core_address"],
+                port: parseInt(envData["core_port"], 10),
+            },
+        });
+    })), observable.pipe(filter(([topic, _]) => !!topic.match(/^roon\/(.+)\/now_playing\/image_key$/gmu)), map(([topic, payload]) => {
         return {
             zone: topic.split("/")[1],
             imageKey: payload.toString(),
