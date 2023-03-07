@@ -1,5 +1,3 @@
-// noinspection TypeScriptValidateTypes
-
 import { RoonNuimoMapping } from "app/mappings/roonNuimoMapping";
 import { Broker } from "app/broker";
 import { BrokerConfig } from "app/brokerConfig";

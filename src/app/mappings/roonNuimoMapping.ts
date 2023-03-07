@@ -96,6 +96,14 @@ export class RoonNuimoMapping implements MappingInterface {
             parameters[0],
             (this.routing.dampingFactor || 60) as number,
           );
+        } else if (command === "next") {
+          this.nuimoReaction(JSON.stringify({ status: "next", parameter: 0 }));
+          this.command(command);
+        } else if (command === "previous") {
+          this.nuimoReaction(
+            JSON.stringify({ status: "previous", parameter: 0 }),
+          );
+          this.command(command);
         } else {
           this.command(command);
         }
